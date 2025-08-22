@@ -6,7 +6,12 @@ async function bootstrap() {
 
   // CORS 설정
   app.enableCors({
-    origin: ["http://localhost:3000", "http://localhost:3002"],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3002",
+      "https://thinkscore.vercel.app", // Vercel 도메인
+      "https://thinkscore-git-main-your-username.vercel.app", // Vercel 프리뷰 도메인
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   });
