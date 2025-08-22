@@ -1,12 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { SupabaseService } from '../supabase/supabase.service';
-import { CreateProfileDto, UpdateProfileDto } from '../common/dto/profiles.dto';
-
-interface Profile {
-  id: string;
-  display_name?: string;
-  created_at: string;
-}
+import { Injectable } from "@nestjs/common";
+import { SupabaseService } from "../supabase/supabase.service";
+import { CreateProfileDto, UpdateProfileDto } from "../common/dto/profiles.dto";
+import { Profile } from "../common/types";
 
 @Injectable()
 export class ProfilesService {
@@ -15,9 +10,9 @@ export class ProfilesService {
   async getProfile(id: string): Promise<Profile> {
     const { data, error } = await this.supabaseService
       .getClient()
-      .from('profiles')
-      .select('*')
-      .eq('id', id)
+      .from("profiles")
+      .select("*")
+      .eq("id", id)
       .single();
 
     if (error) throw new Error(error.message);
@@ -27,7 +22,7 @@ export class ProfilesService {
   async createProfile(profileData: CreateProfileDto): Promise<Profile> {
     const { data, error } = await this.supabaseService
       .getClient()
-      .from('profiles')
+      .from("profiles")
       .insert(profileData)
       .select()
       .single();
@@ -36,12 +31,15 @@ export class ProfilesService {
     return data as Profile;
   }
 
-  async updateProfile(id: string, updateData: UpdateProfileDto): Promise<Profile> {
+  async updateProfile(
+    id: string,
+    updateData: UpdateProfileDto
+  ): Promise<Profile> {
     const { data, error } = await this.supabaseService
       .getClient()
-      .from('profiles')
+      .from("profiles")
       .update(updateData)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
