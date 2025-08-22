@@ -14,6 +14,16 @@ export class QuestionsController {
     return this.questionsService.getActiveQuestions();
   }
 
+  @Get("today")
+  async getTodaysQuestion() {
+    return this.questionsService.getTodaysQuestion();
+  }
+
+  @Get("random")
+  async getRandomQuestion() {
+    return this.questionsService.getRandomQuestion();
+  }
+
   @Get(":id")
   async getQuestion(@Param("id") id: string) {
     return this.questionsService.getQuestion(parseInt(id, 10));
@@ -30,5 +40,10 @@ export class QuestionsController {
     @Body() updateData: UpdateQuestionDto
   ) {
     return this.questionsService.updateQuestion(parseInt(id, 10), updateData);
+  }
+
+  @Post("seed")
+  async seedQuestions() {
+    return { message: await this.questionsService.seedQuestions() };
   }
 }

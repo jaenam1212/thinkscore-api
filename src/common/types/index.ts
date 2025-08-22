@@ -26,13 +26,16 @@ export interface Answer {
 
 export interface Question {
   id: number;
-  prompt: string;
-  description?: string;
+  title: string;
+  description: string;
+  content: string;
+  category: string;
+  difficulty: "easy" | "medium" | "hard";
+  tags: string[];
+  evaluation_criteria: string[];
   is_active: boolean;
   created_at: string;
   updated_at?: string;
-  difficulty_level?: number;
-  category?: string;
 }
 
 export interface Profile {

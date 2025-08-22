@@ -1,9 +1,21 @@
 export interface CreateQuestionDto {
-  prompt: string;
+  title: string;
+  description: string;
+  content: string;
+  category: string;
+  difficulty: "easy" | "medium" | "hard";
+  tags: string[];
+  evaluation_criteria: string[];
   is_active?: boolean;
 }
 
 export interface UpdateQuestionDto {
-  prompt?: string;
+  title?: string;
+  description?: string;
+  content?: string;
+  category?: string;
+  difficulty?: "easy" | "medium" | "hard";
+  tags?: string[];
+  evaluation_criteria?: string[];
   is_active?: boolean;
 }

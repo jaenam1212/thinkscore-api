@@ -1,0 +1,358 @@
+[
+  {
+    "id": 1,
+    "title": "트롤리 딜레마",
+    "description": "5명을 살리기 위해 1명을 희생시킬 수 있는가",
+    "content": "폭주하는 트롤리가 다섯 명의 작업자를 향해 달려가고 있다. 당신은 선로를 바꿀 수 있는 레버 앞에 있다. 선로를 바꾸면 다섯 명은 구하지만 다른 선로의 한 사람이 희생된다. 당신은 레버를 당겨야 하는가?",
+    "category": "윤리·도덕",
+    "difficulty": "medium",
+    "tags": ["공리주의", "도덕적 딜레마", "윤리학"],
+    "evaluation_criteria": [
+      "utilitarian_reasoning",
+      "moral_dilemma_analysis",
+      "ethical_argument"
+    ]
+  },
+  {
+    "id": 2,
+    "title": "슈뢰딩거의 고양이",
+    "description": "양자 중첩 상태가 현실에 주는 의미",
+    "content": "밀폐된 상자 안에서 고양이는 방사성 원소 붕괴 여부에 따라 동시에 살아있고 죽어있다. 상자를 열기 전까지는 두 상태가 중첩된다. 이는 현실에 어떤 의미를 가지는가?",
+    "category": "과학·기술",
+    "difficulty": "medium",
+    "tags": ["양자역학", "과학철학", "현실"],
+    "evaluation_criteria": [
+      "conceptual_analysis",
+      "logical_reasoning",
+      "interpretive_depth"
+    ]
+  },
+  {
+    "id": 3,
+    "title": "시뮬레이션 가설",
+    "description": "우리가 가상세계 속 존재일 가능성",
+    "content": "만약 인류가 더 발전한 문명이 만든 거대한 시뮬레이션 속에 살고 있다면, 우리가 경험하는 세계는 진짜 현실이 아니다. 현실과 시뮬레이션을 어떻게 구분할 수 있는가?",
+    "category": "정체성·존재",
+    "difficulty": "hard",
+    "tags": ["시뮬레이션", "현실", "인식론"],
+    "evaluation_criteria": [
+      "epistemic_reasoning",
+      "critical_analysis",
+      "logical_argument"
+    ]
+  },
+  {
+    "id": 4,
+    "title": "테세우스의 배",
+    "description": "부품이 모두 교체된 배가 여전히 같은 배인지 묻는 문제",
+    "content": "배의 모든 부품이 하나씩 교체되었다. 결국 원래 있던 나무판과 돛, 닻까지 전부 바뀌었다면, 이 배는 여전히 같은 배라고 할 수 있을까?",
+    "category": "정체성·존재",
+    "difficulty": "medium",
+    "tags": ["정체성", "존재론", "철학적 동일성"],
+    "evaluation_criteria": [
+      "identity_consistency",
+      "logical_reasoning",
+      "philosophical_argument"
+    ]
+  },
+  {
+    "id": 5,
+    "title": "경험 기계",
+    "description": "가짜 행복과 진짜 행복 중 어느 쪽이 중요한가",
+    "content": "당신이 원하는 모든 행복을 제공하는 기계가 있다. 하지만 그것은 현실이 아닌 가상 경험일 뿐이다. 진짜 행복은 현실에서만 가능한가?",
+    "category": "윤리적 직관",
+    "difficulty": "medium",
+    "tags": ["쾌락주의", "실존", "윤리학"],
+    "evaluation_criteria": [
+      "ethical_reflection",
+      "existential_reasoning",
+      "argument_depth"
+    ]
+  },
+  {
+    "id": 6,
+    "title": "통 속의 뇌",
+    "description": "현실이 가짜 자극일 수 있다는 인식론적 문제",
+    "content": "당신의 뇌가 실험실 통 속에 담겨 슈퍼컴퓨터와 연결돼 있다면, 지금의 경험은 전부 가짜일 수도 있다. 우리가 경험하는 현실은 진짜라고 확신할 수 있는가?",
+    "category": "정체성·존재",
+    "difficulty": "hard",
+    "tags": ["인식론", "현실", "시뮬레이션"],
+    "evaluation_criteria": [
+      "epistemological_reasoning",
+      "critical_thinking",
+      "argument_depth"
+    ]
+  },
+  {
+    "id": 7,
+    "title": "살찐 남자 변형",
+    "description": "트롤리를 멈추기 위해 한 사람을 밀 수 있는가",
+    "content": "다리 위에서 당신은 폭주하는 트롤리를 본다. 옆에 선 거구의 남자를 밀면 트롤리가 멈추고 다섯 명을 구할 수 있다. 그러나 남자는 죽는다. 당신은 밀어야 하는가?",
+    "category": "윤리·도덕",
+    "difficulty": "hard",
+    "tags": ["윤리학", "도덕적 딜레마", "트롤리 문제"],
+    "evaluation_criteria": [
+      "utilitarian_analysis",
+      "deontological_ethics",
+      "moral_reasoning"
+    ]
+  },
+  {
+    "id": 8,
+    "title": "무지의 베일",
+    "description": "자신의 지위를 모른 채 사회 제도를 설계한다면",
+    "content": "사람들이 자신의 계급, 성별, 능력을 모른 채 사회 제도를 정해야 한다면 어떤 원칙을 택할까? 정의로운 사회는 어떤 모습일까?",
+    "category": "사회·정치",
+    "difficulty": "medium",
+    "tags": ["롤스", "정의", "사회철학"],
+    "evaluation_criteria": [
+      "justice_reasoning",
+      "fairness_analysis",
+      "moral_argument"
+    ]
+  },
+  {
+    "id": 9,
+    "title": "장기 기증자 문제",
+    "description": "건강한 한 사람을 희생해 다섯 명을 살릴 수 있는가",
+    "content": "병원에 다섯 명의 환자가 있고 각각 다른 장기가 필요하다. 한 건강한 사람의 장기를 적출하면 그들을 모두 살릴 수 있다. 의사는 그를 희생해야 하는가?",
+    "category": "윤리·도덕",
+    "difficulty": "hard",
+    "tags": ["의학윤리", "생명", "희생"],
+    "evaluation_criteria": [
+      "ethical_consistency",
+      "utilitarian_thinking",
+      "deontological_analysis"
+    ]
+  },
+  {
+    "id": 10,
+    "title": "플라톤의 동굴",
+    "description": "그림자만 보던 사람이 현실을 이해할 수 있는가",
+    "content": "동굴 안 사람들은 벽에 비친 그림자를 현실로 믿는다. 만약 누군가가 밖으로 나가 진짜 세계를 본다면, 그는 다시 돌아와 다른 사람들을 설득할 수 있을까?",
+    "category": "사회·정치",
+    "difficulty": "easy",
+    "tags": ["플라톤", "인식론", "현실"],
+    "evaluation_criteria": [
+      "interpretive_reasoning",
+      "conceptual_analysis",
+      "clarity_of_thought"
+    ]
+  },
+  {
+    "id": 11,
+    "title": "죄수의 딜레마",
+    "description": "합리적 선택이 모두에게 최악을 가져오는가",
+    "content": "두 범인은 서로의 선택을 모른 채 자백하거나 침묵할 수 있다. 합리적으로 자백하면 서로 불리한 결과를 맞게 된다. 협력은 가능할까?",
+    "category": "사회·정치",
+    "difficulty": "medium",
+    "tags": ["게임이론", "합리성", "협력"],
+    "evaluation_criteria": [
+      "game_theory_reasoning",
+      "logical_consistency",
+      "cooperation_analysis"
+    ]
+  },
+  {
+    "id": 12,
+    "title": "한 아이 희생의 마을",
+    "description": "모두의 행복이 한 아이의 고통에 달려 있다면",
+    "content": "어떤 마을의 번영은 지하 감옥에 갇혀 고통받는 한 아이의 희생 위에 세워져 있다. 이 사회는 정당한가? 사람들은 그 아이를 위해 마을을 떠나야 하는가?",
+    "category": "윤리적 직관",
+    "difficulty": "hard",
+    "tags": ["윤리학", "정의", "희생"],
+    "evaluation_criteria": [
+      "ethical_reasoning",
+      "justice_analysis",
+      "moral_argument"
+    ]
+  },
+  {
+    "id": 13,
+    "title": "철인정치 vs 대중정치",
+    "description": "지혜로운 소수와 대중 통치 중 어느 쪽이 옳은가",
+    "content": "지혜로운 철학자가 통치하는 사회와 대중이 다수결로 통치하는 사회 중 어느 쪽이 더 나은가? 지식과 합리성이 권력의 기준이 될 수 있는가?",
+    "category": "사회·정치",
+    "difficulty": "hard",
+    "tags": ["정치철학", "민주주의", "엘리트주의"],
+    "evaluation_criteria": [
+      "political_analysis",
+      "philosophical_depth",
+      "ethical_reflection"
+    ]
+  },
+  {
+    "id": 14,
+    "title": "시간여행 역설",
+    "description": "과거로 돌아가면 논리적 모순이 발생하는가",
+    "content": "당신이 과거로 돌아가 조부를 살해한다면, 당신은 태어나지 못한다. 그렇다면 시간여행은 논리적으로 불가능한가, 아니면 현실에서 다른 방식으로 일어날 수 있는가?",
+    "category": "자유·결정",
+    "difficulty": "hard",
+    "tags": ["시간여행", "역설", "인과성"],
+    "evaluation_criteria": [
+      "logical_reasoning",
+      "causality_analysis",
+      "argument_depth"
+    ]
+  },
+  {
+    "id": 15,
+    "title": "로봇 3원칙 테스트",
+    "description": "규칙만으로 도덕적 판단이 가능할까",
+    "content": "아시모프의 로봇 3원칙이 현실에서 완벽히 적용될 수 있는가? 규칙만으로 도덕적 판단이 가능할까?",
+    "category": "과학·기술",
+    "difficulty": "medium",
+    "tags": ["AI윤리", "규칙", "로봇"],
+    "evaluation_criteria": [
+      "ai_ethics",
+      "rule_based_reasoning",
+      "ethical_analysis"
+    ]
+  },
+  {
+    "id": 16,
+    "title": "고통 없는 살해",
+    "description": "고통이 없다면 살인은 여전히 잘못인가",
+    "content": "만약 누군가를 죽였을 때 그 사람이 전혀 고통을 느끼지 않는다면, 그것은 여전히 잘못인가? 도덕적 잘못은 고통 때문인가, 아니면 행위 자체 때문인가?",
+    "category": "윤리·도덕",
+    "difficulty": "medium",
+    "tags": ["도덕철학", "행위윤리", "도덕적 가치"],
+    "evaluation_criteria": [
+      "deontological_analysis",
+      "ethical_reasoning",
+      "argument_depth"
+    ]
+  },
+  {
+    "id": 17,
+    "title": "기억 소거 후 동일인 문제",
+    "description": "기억이 사라져도 같은 사람인가",
+    "content": "사고로 인해 당신의 모든 기억이 지워지고 새로운 기억이 주입된다면, 그 존재는 여전히 당신인가? 정체성은 기억의 연속성에 달려 있는가?",
+    "category": "정체성·존재",
+    "difficulty": "medium",
+    "tags": ["기억", "정체성", "자아"],
+    "evaluation_criteria": [
+      "memory_continuity",
+      "logical_reasoning",
+      "philosophical_analysis"
+    ]
+  },
+  {
+    "id": 18,
+    "title": "AI 권리",
+    "description": "AI가 감정을 느낀다면 권리를 가져야 하는가",
+    "content": "AI가 감정을 느끼고 고통을 표현할 수 있다면, 우리는 그 존재에게 권리와 도덕적 지위를 인정해야 하는가? 그렇지 않다면 차별이 되는가?",
+    "category": "과학·기술",
+    "difficulty": "medium",
+    "tags": ["AI윤리", "권리", "의식"],
+    "evaluation_criteria": ["ai_ethics", "moral_reasoning", "rights_discussion"]
+  },
+  {
+    "id": 19,
+    "title": "사회계약",
+    "description": "국가 권력의 정당성은 어디서 오는가",
+    "content": "인간은 자유를 일부 포기하고 국가에 권력을 위임한다. 그렇다면 국가의 정당성은 어디서 비롯되는가? 개인은 언제 국가에 저항할 수 있는가?",
+    "category": "사회·정치",
+    "difficulty": "medium",
+    "tags": ["홉스", "루소", "계약론"],
+    "evaluation_criteria": [
+      "political_philosophy",
+      "legitimacy_analysis",
+      "reasoning_depth"
+    ]
+  },
+  {
+    "id": 20,
+    "title": "AI가 만든 AI",
+    "description": "AI가 스스로 새로운 AI를 만든다면",
+    "content": "AI가 스스로 더 강력한 AI를 만든다면, 책임은 누구에게 있는가? 인간은 이 과정을 통제할 수 있을까?",
+    "category": "과학·기술",
+    "difficulty": "hard",
+    "tags": ["AI", "책임", "기술철학"],
+    "evaluation_criteria": [
+      "responsibility_analysis",
+      "ai_ethics",
+      "philosophical_depth"
+    ]
+  },
+  {
+    "id": 21,
+    "title": "공공재 문제",
+    "description": "무임승차 속에서 사회는 유지될 수 있는가",
+    "content": "모두가 혜택을 누리지만 비용을 내고 싶어하지 않는 상황에서 사회는 유지될 수 있는가? 무임승차 문제는 어떻게 해결해야 하는가?",
+    "category": "사회·정치",
+    "difficulty": "medium",
+    "tags": ["경제철학", "협력", "사회문제"],
+    "evaluation_criteria": ["game_theory", "moral_reasoning", "policy_analysis"]
+  },
+  {
+    "id": 22,
+    "title": "불멸의 삶",
+    "description": "영원히 살아도 정체성이 유지될까",
+    "content": "영원히 살 수 있는 능력을 얻었다면, 무한한 시간 속에서 정체성과 삶의 의미는 어떻게 변할까? 끝없는 생존은 축복일까, 저주일까?",
+    "category": "정체성·존재",
+    "difficulty": "medium",
+    "tags": ["불멸", "의미", "삶"],
+    "evaluation_criteria": [
+      "existential_analysis",
+      "meaning_of_life",
+      "philosophical_reflection"
+    ]
+  },
+  {
+    "id": 23,
+    "title": "정의로운 고문 역설",
+    "description": "많은 생명을 위해 한 사람을 고문할 수 있는가",
+    "content": "테러 공격을 막기 위해 한 명의 용의자를 고문하면 수많은 생명을 구할 수 있다. 이때 고문은 정당화될 수 있는가? 혹은 어떤 상황에서도 금지해야 하는가?",
+    "category": "윤리·도덕",
+    "difficulty": "hard",
+    "tags": ["정의", "폭력", "윤리학"],
+    "evaluation_criteria": [
+      "ethical_principles",
+      "deontological_ethics",
+      "practical_reasoning"
+    ]
+  },
+  {
+    "id": 24,
+    "title": "행복한 돼지 vs 불행한 인간",
+    "description": "쾌락만 따진다면 돼지가 철학자보다 나은가",
+    "content": "쾌락만을 기준으로 한다면 행복한 돼지가 불행한 철학자보다 낫다고 할 수 있다. 그렇다면 단순한 쾌락이 삶의 가치 기준이 될 수 있는가?",
+    "category": "윤리적 직관",
+    "difficulty": "easy",
+    "tags": ["쾌락주의", "실존", "윤리"],
+    "evaluation_criteria": [
+      "hedonism_analysis",
+      "value_reflection",
+      "ethical_reasoning"
+    ]
+  },
+  {
+    "id": 25,
+    "title": "지능 vs 의식",
+    "description": "지능과 의식은 같은 것인가",
+    "content": "AI가 인간처럼 문제를 해결할 수 있다고 해도, 의식이 있다고 말할 수 있는가? 지능과 의식은 어떻게 구분되는가?",
+    "category": "과학·기술",
+    "difficulty": "hard",
+    "tags": ["AI", "의식", "지능"],
+    "evaluation_criteria": [
+      "conceptual_clarity",
+      "ai_ethics",
+      "philosophical_reasoning"
+    ]
+  },
+  {
+    "id": 26,
+    "title": "피난정의(구명보트)",
+    "description": "누구를 살릴지 선택해야 한다면",
+    "content": "구명보트에 단 한 명만 더 태울 수 있다. 누구를 구해야 하는가? 생존의 가치는 어떻게 판단할 수 있는가?",
+    "category": "윤리적 직관",
+    "difficulty": "medium",
+    "tags": ["생존", "윤리", "도덕적 선택"],
+    "evaluation_criteria": [
+      "ethical_reflection",
+      "value_judgment",
+      "moral_argument"
+    ]
+  }
+]
