@@ -8,6 +8,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "packageManager": "pnpm@9.0.0",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -29,6 +30,8 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@supabase/supabase-js": "^2.55.0",
+    "axios": "^1.11.0",
+    "openai": "^5.15.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

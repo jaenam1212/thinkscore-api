@@ -25,4 +25,9 @@ export class AnswersController {
   async getAnswer(@Param("id") id: string) {
     return this.answersService.getAnswer(parseInt(id, 10));
   }
+
+  @Post(":id/evaluate")
+  async evaluateAnswer(@Param("id") id: string) {
+    return this.answersService.evaluateAnswer(parseInt(id, 10));
+  }
 }

@@ -1,11 +1,15 @@
 import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
+import { OpenAIService } from "../openai/openai.service";
 import { CreateAnswerDto } from "../common/dto/answers.dto";
 import { Answer } from "../common/types";
 
 @Injectable()
 export class AnswersService {
-  constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(
+    private readonly supabaseService: SupabaseService,
+    private readonly openaiService: OpenAIService
+  ) {}
 
   async getUserAnswers(userId: string): Promise<Answer[]> {
     const { data, error } = await this.supabaseService
@@ -72,5 +76,43 @@ export class AnswersService {
 
     if (error) throw new Error(error.message);
     return data as Answer;
+  }
+
+  async evaluateAnswer(answerId: number): Promise<any> {
+    // 답변과 관련 질문 정보 가져오기
+    const answer = await this.getAnswer(answerId);
+
+    if (!answer.questions) {
+      throw new Error("질문 정보를 찾을 수 없습니다.");
+    }
+
+    // OpenAI로 평가 실행
+    const evaluation = await this.openaiService.evaluateAnswer(
+      answer.questions.content,
+      answer.content,
+      answer.questions.evaluation_criteria || []
+    );
+
+    // 점수를 scores 테이블에 저장
+    const { data: scoreData, error: scoreError } = await this.supabaseService
+      .getClient()
+      .from("scores")
+      .insert({
+        answer_id: answerId,
+        score: evaluation.score,
+        reason: evaluation.feedback,
+        created_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (scoreError) {
+      console.error("Score save error:", scoreError);
+    }
+
+    return {
+      ...evaluation,
+      scoreRecord: scoreData,
+    };
   }
 }

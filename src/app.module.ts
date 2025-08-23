@@ -8,6 +8,7 @@ import { ProfilesModule } from "./profiles/profiles.module";
 import { QuestionsModule } from "./questions/questions.module";
 import { AnswersModule } from "./answers/answers.module";
 import { ScoresModule } from "./scores/scores.module";
+import { OpenAIModule } from "./openai/openai.module";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ScoresModule } from "./scores/scores.module";
     QuestionsModule,
     AnswersModule,
     ScoresModule,
+    OpenAIModule,
   ],
   controllers: [AppController],
   providers: [AppService],

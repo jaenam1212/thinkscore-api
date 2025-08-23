@@ -8,18 +8,16 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       "http://localhost:3000",
-      "http://localhost:3002",
       "https://thinkscore.vercel.app", // Vercel 도메인
-      "https://thinkscore-git-main-your-username.vercel.app", // Vercel 프리뷰 도메인
+      "https://thinkscore-eight.vercel.app", // Vercel 프리뷰 도메인
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   });
 
-  await app.listen(process.env.PORT ?? 3001);
-  console.log(
-    `Application is running on: http://localhost:${process.env.PORT ?? 3001}`
-  );
+  const port = parseInt(process.env.PORT ?? "3000", 10);
+  await app.listen(port, "0.0.0.0");
+  console.log(`Application is running on: http://localhost:${port}`);
 }
 
 bootstrap().catch((err) => {
