@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS questions (
 -- Create profiles table (for user profiles)
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email VARCHAR(255) UNIQUE,
+  password_hash VARCHAR(255),
   display_name VARCHAR(100),
   total_score INTEGER DEFAULT 0,
   level INTEGER DEFAULT 1,
@@ -62,46 +64,59 @@ END;
 $$ language 'plpgsql';
 
 -- Create triggers for updated_at
+DROP TRIGGER IF EXISTS update_questions_updated_at ON questions;
 CREATE TRIGGER update_questions_updated_at BEFORE UPDATE ON questions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Enable Row Level Security (RLS)
-ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE answers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE scores ENABLE ROW LEVEL SECURITY;
+-- Disable Row Level Security (RLS) for JWT-based auth
+-- ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE answers ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE scores ENABLE ROW LEVEL SECURITY;
 
--- Create policies for public read access to questions
-CREATE POLICY "Questions are viewable by everyone" ON questions
-    FOR SELECT USING (true);
+-- RLS policies disabled for JWT-based auth
+-- Uncomment and modify these if you want to use RLS with JWT
 
--- Create policies for authenticated users
-CREATE POLICY "Users can view their own profile" ON profiles
-    FOR SELECT USING (auth.uid() = id);
+-- CREATE policies for public read access to questions
+-- DROP POLICY IF EXISTS "Questions are viewable by everyone" ON questions;
+-- CREATE POLICY "Questions are viewable by everyone" ON questions
+--     FOR SELECT USING (true);
 
-CREATE POLICY "Users can update their own profile" ON profiles
-    FOR UPDATE USING (auth.uid() = id);
+-- CREATE policies for authenticated users  
+-- DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
+-- CREATE POLICY "Users can view their own profile" ON profiles
+--     FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "Users can insert their own profile" ON profiles
-    FOR INSERT WITH CHECK (auth.uid() = id);
+-- DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
+-- CREATE POLICY "Users can update their own profile" ON profiles
+--     FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Users can view their own answers" ON answers
-    FOR SELECT USING (auth.uid() = user_id);
+-- DROP POLICY IF EXISTS "Users can insert their own profile" ON profiles;
+-- CREATE POLICY "Users can insert their own profile" ON profiles
+--     FOR INSERT WITH CHECK (auth.uid() = id);
 
-CREATE POLICY "Users can insert their own answers" ON answers
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- DROP POLICY IF EXISTS "Users can view their own answers" ON answers;
+-- CREATE POLICY "Users can view their own answers" ON answers
+--     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can view scores for their answers" ON scores
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1 FROM answers 
-            WHERE answers.id = scores.answer_id 
-            AND answers.user_id = auth.uid()
-        )
-    );
+-- DROP POLICY IF EXISTS "Users can insert their own answers" ON answers;
+-- CREATE POLICY "Users can insert their own answers" ON answers
+--     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "AI can insert scores" ON scores
-    FOR INSERT WITH CHECK (is_ai_score = true);
+-- DROP POLICY IF EXISTS "Users can view scores for their answers" ON scores;
+-- CREATE POLICY "Users can view scores for their answers" ON scores
+--     FOR SELECT USING (
+--         EXISTS (
+--             SELECT 1 FROM answers 
+--             WHERE answers.id = scores.answer_id 
+--             AND answers.user_id = auth.uid()
+--         )
+--     );
+
+-- DROP POLICY IF EXISTS "AI can insert scores" ON scores;
+-- CREATE POLICY "AI can insert scores" ON scores
+--     FOR INSERT WITH CHECK (is_ai_score = true);

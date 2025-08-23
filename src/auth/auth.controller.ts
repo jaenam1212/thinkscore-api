@@ -1,6 +1,27 @@
-import { Controller, Get, Post, Param, Req, Res } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Req,
+  Res,
+  Body,
+  UseGuards,
+} from "@nestjs/common";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
+import { RegisterDto } from "./dto/register.dto";
+import { LoginDto } from "./dto/login.dto";
+
+import { JwtAuthGuard } from "./guards/jwt-auth.guard";
+
+interface JwtRequest extends Request {
+  user: {
+    userId: string;
+    email: string;
+    displayName: string;
+  };
+}
 
 @Controller("auth")
 export class AuthController {
@@ -65,5 +86,26 @@ export class AuthController {
     } catch (error) {
       throw new Error((error as Error).message);
     }
+  }
+
+  // JWT 기반 회원가입/로그인 엔드포인트들
+  @Post("register")
+  async register(@Body() registerDto: RegisterDto) {
+    return await this.authService.register(registerDto);
+  }
+
+  @Post("login")
+  async login(@Body() loginDto: LoginDto) {
+    return await this.authService.login(loginDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("profile")
+  getProfile(@Req() req: JwtRequest) {
+    return {
+      id: req.user.userId,
+      email: req.user.email,
+      displayName: req.user.displayName,
+    };
   }
 }
