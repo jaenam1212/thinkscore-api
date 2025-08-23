@@ -21,7 +21,7 @@ export class OpenAIService {
     feedback: string;
     criteriaScores: Record<string, number>;
   }> {
-    const prompt = `
+    const input = `
 철학적 질문에 대한 답변을 평가해주세요.
 
 질문: ${question}
@@ -30,12 +30,12 @@ export class OpenAIService {
 
 평가 기준: ${criteria.join(", ")}
 
-다음 형식으로 평가해주세요:
-1. 전체 점수 (0-100점)
-2. 각 기준별 점수 (0-100점)
-3. 상세 피드백
+채점 축: 분석(논리 구조·인과·반론처리), 창의(새 관점·적절한 비유), 일관성(자기모순 부재·결론 정합성)
+각 축 점수는 0~100 정수. 총점 = round(0.4*분석 + 0.3*창의 + 0.3*일관성)
+길이 편향 금지(장황·중복 시 감점). 피드백은 정확히 2문장: 1문장=강점, 1문장=개선점
+입력 criteria가 주어지면 그 이름을 그대로 사용해 criteriaScores 키를 채운다(미매칭 시 가장 근접 축에 매핑)
 
-응답 형식 (JSON):
+JSON 형식으로만 응답:
 {
   "score": 전체점수,
   "feedback": "상세한 피드백",
@@ -47,23 +47,23 @@ export class OpenAIService {
 `;
 
     try {
-      const response = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "당신은 철학적 사고를 평가하는 전문가입니다. 논리적 일관성, 창의성, 깊이를 중요하게 평가합니다.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.3,
+      console.log("=== OpenAI Request ===");
+      console.log("Question:", question);
+      console.log("Answer:", answer);
+      console.log("Criteria:", criteria);
+      console.log("Input:", input);
+
+      const response = await this.openai.responses.create({
+        model: "gpt-5-nano",
+        input: input,
+        reasoning: { effort: "low" },
+        text: { verbosity: "low" },
       });
 
-      const content = response.choices[0].message.content;
+      console.log("=== OpenAI Response ===");
+      console.log("Full response:", JSON.stringify(response, null, 2));
+
+      const content = response.output_text;
       if (!content) {
         throw new Error("OpenAI 응답이 비어있습니다.");
       }

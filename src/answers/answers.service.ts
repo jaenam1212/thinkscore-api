@@ -87,14 +87,18 @@ export class AnswersService {
     }
 
     // OpenAI로 평가 실행
+    const questions = answer.questions as {
+      prompt: string;
+      evaluation_criteria?: string[];
+    };
     const evaluation = await this.openaiService.evaluateAnswer(
-      answer.questions.content,
+      questions.prompt,
       answer.content,
-      answer.questions.evaluation_criteria || []
+      questions.evaluation_criteria || []
     );
 
     // 점수를 scores 테이블에 저장
-    const { data: scoreData, error: scoreError } = await this.supabaseService
+    const { data: scoreData, error: scoreError } = (await this.supabaseService
       .getClient()
       .from("scores")
       .insert({
@@ -104,7 +108,7 @@ export class AnswersService {
         created_at: new Date().toISOString(),
       })
       .select()
-      .single();
+      .single()) as { data: any; error: any };
 
     if (scoreError) {
       console.error("Score save error:", scoreError);
