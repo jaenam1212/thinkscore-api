@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsNotEmpty, IsUUID } from "class-validator";
+import {
+  IsString,
+  IsOptional,
+  IsNotEmpty,
+  IsUUID,
+  IsNumber,
+} from "class-validator";
+import { Type } from "class-transformer";
 
 export class CreatePostDto {
   @IsString()
@@ -12,6 +19,11 @@ export class CreatePostDto {
   @IsString()
   @IsOptional()
   category?: string = "free";
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  question_id?: number;
 }
 
 export class UpdatePostDto {

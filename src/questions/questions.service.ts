@@ -1,4 +1,5 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
   CreateQuestionDto,
@@ -20,6 +21,8 @@ interface SeedQuestion {
 
 @Injectable()
 export class QuestionsService {
+  private readonly logger = new Logger(QuestionsService.name);
+
   constructor(private readonly supabaseService: SupabaseService) {}
 
   async getActiveQuestions(): Promise<Question[]> {
@@ -176,5 +179,113 @@ export class QuestionsService {
 
     const randomIndex = Math.floor(Math.random() * data.length);
     return data[randomIndex] as Question;
+  }
+
+  // 매일 자정에 실행되는 Cron Job
+  @Cron("0 0 * * *") // 초 분 시 일 월 요일
+  async publishDailyQuestion() {
+    this.logger.log("Running daily question publishing job...");
+
+    try {
+      const today = new Date();
+      const todayString = today.toISOString().split("T")[0]; // YYYY-MM-DD 형식
+
+      this.logger.log(`Looking for questions to publish on ${todayString}`);
+
+      // 오늘 출시되어야 할 문제들을 찾아서 포럼을 활성화
+      const { data: questionsToPublish, error: findError } =
+        await this.supabaseService
+          .getClient()
+          .from("questions")
+          .select("id, title, published_at")
+          .eq("forum_enabled", false)
+          .gte("published_at", todayString)
+          .lt(
+            "published_at",
+            new Date(today.getTime() + 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split("T")[0]
+          );
+
+      if (findError) {
+        this.logger.error("Error finding questions to publish:", findError);
+        return;
+      }
+
+      if (!questionsToPublish || questionsToPublish.length === 0) {
+        this.logger.log("No questions to publish today");
+        return;
+      }
+
+      this.logger.log(
+        `Found ${questionsToPublish.length} questions to publish:`,
+        questionsToPublish.map((q) => q.title)
+      );
+
+      // 찾은 문제들의 포럼을 활성화
+      const { data: updatedQuestions, error: updateError } =
+        await this.supabaseService
+          .getClient()
+          .from("questions")
+          .update({
+            forum_enabled: true,
+            updated_at: new Date().toISOString(),
+          })
+          .in(
+            "id",
+            questionsToPublish.map((q) => q.id)
+          )
+          .select("id, title");
+
+      if (updateError) {
+        this.logger.error("Error updating questions:", updateError);
+        return;
+      }
+
+      this.logger.log(
+        `Successfully published forums for ${updatedQuestions?.length || 0} questions`
+      );
+    } catch (error) {
+      this.logger.error("Daily question publishing job failed:", error);
+    }
+  }
+
+  // 서버 시작 시 오늘 문제 확인 (선택사항)
+  async checkTodaysQuestion() {
+    this.logger.log("Checking if today's question forum is enabled...");
+    await this.publishDailyQuestion();
+  }
+
+  // 수동으로 특정 문제의 포럼을 활성화하는 메서드
+  async enableQuestionForum(
+    questionId: number
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const { data, error } = await this.supabaseService
+        .getClient()
+        .from("questions")
+        .update({
+          forum_enabled: true,
+          published_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", questionId)
+        .select("id, title")
+        .single();
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      return {
+        success: true,
+        message: `Forum enabled for question: ${data.title}`,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Failed to enable forum: ${error instanceof Error ? error.message : "Unknown error"}`,
+      };
+    }
   }
 }

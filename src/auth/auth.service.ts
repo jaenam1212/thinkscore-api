@@ -18,9 +18,44 @@ interface Profile {
   id: string;
   email: string;
   display_name: string;
+  username?: string;
   password_hash?: string;
   created_at: string;
   updated_at: string;
+  kakao_id?: string;
+  google_id?: string;
+  naver_id?: string;
+  apple_id?: string;
+  avatar_url?: string;
+  provider?: string;
+  last_login_at?: string;
+}
+
+interface KakaoProfile {
+  id: string;
+  nickname: string;
+  email: string;
+  profileImage: string;
+}
+
+interface GoogleProfile {
+  id: string;
+  name: string;
+  email: string;
+  picture: string;
+}
+
+interface NaverProfile {
+  id: string;
+  nickname: string;
+  email: string;
+  profile_image: string;
+}
+
+interface AppleProfile {
+  id: string;
+  name?: string;
+  email: string;
 }
 
 @Injectable()
@@ -50,7 +85,7 @@ export class AuthService {
     return { message: "Signed out successfully" };
   }
 
-  async getUser(userId: string) {
+  async getUser(userId: string): Promise<Profile> {
     const { data, error } = await this.supabaseService
       .getClient()
       .from("profiles")
@@ -59,10 +94,13 @@ export class AuthService {
       .single();
 
     if (error) throw new Error(error.message);
-    return data;
+    return data as Profile;
   }
 
-  async createOrUpdateProfile(userId: string, profileData: ProfileData) {
+  async createOrUpdateProfile(
+    userId: string,
+    profileData: ProfileData
+  ): Promise<Profile> {
     const { data, error } = await this.supabaseService
       .getClient()
       .from("profiles")
@@ -75,7 +113,7 @@ export class AuthService {
       .single();
 
     if (error) throw new Error(error.message);
-    return data;
+    return data as Profile;
   }
 
   async getSession() {
@@ -109,6 +147,7 @@ export class AuthService {
         email,
         password_hash: hashedPassword,
         display_name: displayName || email.split("@")[0],
+        username: displayName || email.split("@")[0],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -196,5 +235,299 @@ export class AuthService {
     }
 
     return data as Profile | null;
+  }
+
+  async kakaoLogin(accessToken: string, profile: KakaoProfile) {
+    // 카카오 토큰 검증 (선택사항)
+    // await this.verifyKakaoToken(accessToken);
+
+    let user = await this.findUserByKakaoId(profile.id);
+
+    if (!user) {
+      user = await this.findUserByEmail(profile.email);
+
+      if (user) {
+        const { data, error } = await this.supabaseService
+          .getClient()
+          .from("profiles")
+          .update({
+            kakao_id: profile.id,
+            avatar_url: profile.profileImage,
+            provider: "kakao",
+            last_login_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", user.id)
+          .select()
+          .single();
+
+        if (error) throw new Error(error.message);
+        user = data as Profile;
+      } else {
+        const { data, error } = await this.supabaseService
+          .getClient()
+          .from("profiles")
+          .insert({
+            email: profile.email,
+            display_name: profile.nickname,
+            username: profile.nickname,
+            kakao_id: profile.id,
+            avatar_url: profile.profileImage,
+            provider: "kakao",
+            last_login_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (error) throw new Error(error.message);
+        user = data as Profile;
+      }
+    } else {
+      await this.updateLastLogin(user.id);
+    }
+
+    return this.generateJWTResponse(user);
+  }
+
+  private async findUserByKakaoId(kakaoId: string): Promise<Profile | null> {
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from("profiles")
+      .select("*")
+      .eq("kakao_id", kakaoId)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      throw new Error(error.message);
+    }
+
+    return data as Profile | null;
+  }
+
+  async googleLogin(accessToken: string, profile: GoogleProfile) {
+    let user = await this.findUserByGoogleId(profile.id);
+
+    if (!user) {
+      user = await this.findUserByEmail(profile.email);
+
+      if (user) {
+        const { data, error } = await this.supabaseService
+          .getClient()
+          .from("profiles")
+          .update({
+            google_id: profile.id,
+            avatar_url: profile.picture,
+            provider: "google",
+            last_login_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", user.id)
+          .select()
+          .single();
+
+        if (error) throw new Error(error.message);
+        user = data as Profile;
+      } else {
+        const { data, error } = await this.supabaseService
+          .getClient()
+          .from("profiles")
+          .insert({
+            email: profile.email,
+            display_name: profile.name,
+            username: profile.name,
+            google_id: profile.id,
+            avatar_url: profile.picture,
+            provider: "google",
+            last_login_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (error) throw new Error(error.message);
+        user = data as Profile;
+      }
+    } else {
+      // 로그인 시간 업데이트
+      await this.updateLastLogin(user.id);
+    }
+
+    return this.generateJWTResponse(user);
+  }
+
+  async naverLogin(accessToken: string, profile: NaverProfile) {
+    let user = await this.findUserByNaverId(profile.id);
+
+    if (!user) {
+      user = await this.findUserByEmail(profile.email);
+
+      if (user) {
+        const { data, error } = await this.supabaseService
+          .getClient()
+          .from("profiles")
+          .update({
+            naver_id: profile.id,
+            avatar_url: profile.profile_image,
+            provider: "naver",
+            last_login_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", user.id)
+          .select()
+          .single();
+
+        if (error) throw new Error(error.message);
+        user = data as Profile;
+      } else {
+        const { data, error } = await this.supabaseService
+          .getClient()
+          .from("profiles")
+          .insert({
+            email: profile.email,
+            display_name: profile.nickname,
+            username: profile.nickname,
+            naver_id: profile.id,
+            avatar_url: profile.profile_image,
+            provider: "naver",
+            last_login_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (error) throw new Error(error.message);
+        user = data as Profile;
+      }
+    } else {
+      await this.updateLastLogin(user.id);
+    }
+
+    return this.generateJWTResponse(user);
+  }
+
+  async appleLogin(accessToken: string, profile: AppleProfile) {
+    let user = await this.findUserByAppleId(profile.id);
+
+    if (!user) {
+      user = await this.findUserByEmail(profile.email);
+
+      if (user) {
+        const { data, error } = await this.supabaseService
+          .getClient()
+          .from("profiles")
+          .update({
+            apple_id: profile.id,
+            provider: "apple",
+            last_login_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", user.id)
+          .select()
+          .single();
+
+        if (error) throw new Error(error.message);
+        user = data as Profile;
+      } else {
+        const { data, error } = await this.supabaseService
+          .getClient()
+          .from("profiles")
+          .insert({
+            email: profile.email,
+            display_name: profile.name || profile.email.split("@")[0],
+            username: profile.name || profile.email.split("@")[0],
+            apple_id: profile.id,
+            provider: "apple",
+            last_login_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (error) throw new Error(error.message);
+        user = data as Profile;
+      }
+    } else {
+      await this.updateLastLogin(user.id);
+    }
+
+    return this.generateJWTResponse(user);
+  }
+
+  private async findUserByGoogleId(googleId: string): Promise<Profile | null> {
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from("profiles")
+      .select("*")
+      .eq("google_id", googleId)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      throw new Error(error.message);
+    }
+
+    return data as Profile | null;
+  }
+
+  private async findUserByNaverId(naverId: string): Promise<Profile | null> {
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from("profiles")
+      .select("*")
+      .eq("naver_id", naverId)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      throw new Error(error.message);
+    }
+
+    return data as Profile | null;
+  }
+
+  private async findUserByAppleId(appleId: string): Promise<Profile | null> {
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from("profiles")
+      .select("*")
+      .eq("apple_id", appleId)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      throw new Error(error.message);
+    }
+
+    return data as Profile | null;
+  }
+
+  private async updateLastLogin(userId: string): Promise<void> {
+    await this.supabaseService
+      .getClient()
+      .from("profiles")
+      .update({
+        last_login_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", userId);
+  }
+
+  private generateJWTResponse(user: Profile) {
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      displayName: user.display_name,
+    };
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.display_name,
+      },
+      access_token: this.jwtService.sign(payload),
+    };
   }
 }

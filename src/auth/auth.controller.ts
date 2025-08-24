@@ -10,6 +10,7 @@ import {
 } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
+import { AuthMigrationService } from "./auth-migration.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 
@@ -25,7 +26,10 @@ interface JwtRequest extends Request {
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly authMigrationService: AuthMigrationService
+  ) {}
 
   @Get("signin/:provider")
   async signInWithProvider(
@@ -108,4 +112,23 @@ export class AuthController {
       displayName: req.user.displayName,
     };
   }
+
+  @Post("kakao")
+  async kakaoLogin(
+    @Body() body: { accessToken: string; profile: KakaoProfile }
+  ) {
+    return this.authService.kakaoLogin(body.accessToken, body.profile);
+  }
+
+  @Post("migrate-social")
+  async migrateSocialLogin() {
+    return this.authMigrationService.addSocialLoginFields();
+  }
+}
+
+interface KakaoProfile {
+  id: string;
+  nickname: string;
+  email: string;
+  profileImage: string;
 }

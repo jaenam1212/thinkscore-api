@@ -4,6 +4,7 @@ import { PassportModule } from "@nestjs/passport";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
+import { AuthMigrationService } from "./auth-migration.service";
 import { SupabaseModule } from "../supabase/supabase.module";
 import { JwtStrategy } from "../auth/strategies/jwt.strategy";
 import { LocalStrategy } from "./strategies/local.strategy";
@@ -24,7 +25,7 @@ import { LocalStrategy } from "./strategies/local.strategy";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy],
+  providers: [AuthService, AuthMigrationService, JwtStrategy, LocalStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

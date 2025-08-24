@@ -13,6 +13,8 @@ import {
 import type { Request as ExpressRequest } from "express";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ForumService } from "./forum.service";
+import { ForumSeedService } from "./forum-seed.service";
+import { ForumMigrationService } from "./forum-migration.service";
 import {
   CreatePostDto,
   UpdatePostDto,
@@ -28,7 +30,11 @@ interface JwtRequest extends ExpressRequest {
 
 @Controller("forum")
 export class ForumController {
-  constructor(private readonly forumService: ForumService) {}
+  constructor(
+    private readonly forumService: ForumService,
+    private readonly forumSeedService: ForumSeedService,
+    private readonly forumMigrationService: ForumMigrationService
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post("posts")
@@ -41,10 +47,11 @@ export class ForumController {
 
   @Get("posts")
   async getPosts(
-    @Query("category") category?: string,
+    @Query("question_id") questionId?: string,
     @Query("sort") sortBy?: "recent" | "popular" | "all"
   ) {
-    return this.forumService.getPosts(category, sortBy);
+    const questionIdNumber = questionId ? parseInt(questionId, 10) : undefined;
+    return this.forumService.getPosts(questionIdNumber, sortBy);
   }
 
   @Get("posts/:id")
@@ -86,5 +93,25 @@ export class ForumController {
   @Post("posts/:id/like")
   async toggleLike(@Param("id") id: string, @Request() req: JwtRequest) {
     return this.forumService.toggleLike(+id, req.user.id);
+  }
+
+  @Post("migrate")
+  async migrateForumTables() {
+    return this.forumMigrationService.runForumMigrations();
+  }
+
+  @Post("seed")
+  async seedForumData() {
+    return this.forumSeedService.seedForumData();
+  }
+
+  @Get("debug")
+  async debugConnection() {
+    return this.forumService.debugConnection();
+  }
+
+  @Get("boards")
+  async getAvailableBoards() {
+    return this.forumService.getAvailableBoards();
   }
 }

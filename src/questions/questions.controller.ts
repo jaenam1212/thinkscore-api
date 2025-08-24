@@ -46,4 +46,15 @@ export class QuestionsController {
   async seedQuestions() {
     return { message: await this.questionsService.seedQuestions() };
   }
+
+  @Post(":id/enable-forum")
+  async enableQuestionForum(@Param("id") id: string) {
+    return this.questionsService.enableQuestionForum(parseInt(id, 10));
+  }
+
+  @Post("publish-daily")
+  async publishDailyQuestion() {
+    await this.questionsService.publishDailyQuestion();
+    return { message: "Daily question publishing job executed" };
+  }
 }
