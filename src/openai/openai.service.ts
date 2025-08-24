@@ -47,21 +47,12 @@ JSON 형식으로만 응답:
 `;
 
     try {
-      console.log("=== OpenAI Request ===");
-      console.log("Question:", question);
-      console.log("Answer:", answer);
-      console.log("Criteria:", criteria);
-      console.log("Input:", input);
-
       const response = await this.openai.responses.create({
         model: "gpt-5-nano",
         input: input,
         reasoning: { effort: "low" },
         text: { verbosity: "low" },
       });
-
-      console.log("=== OpenAI Response ===");
-      console.log("Full response:", JSON.stringify(response, null, 2));
 
       const content = response.output_text;
       if (!content) {
