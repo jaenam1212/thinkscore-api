@@ -13,6 +13,7 @@ import { AuthService } from "./auth.service";
 import { AuthMigrationService } from "./auth-migration.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
+import { Profile } from "../common/types";
 
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 
@@ -78,7 +79,7 @@ export class AuthController {
   }
 
   @Get("user")
-  async getUser() {
+  async getUser(): Promise<Profile> {
     try {
       const session = await this.authService.getSession();
       if (!session.session) {
