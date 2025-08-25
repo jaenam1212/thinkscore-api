@@ -7,19 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Security headers
-  app.use(
-    helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          scriptSrc: ["'self'"],
-          imgSrc: ["'self'", "data:", "https:"],
-        },
-      },
-      crossOriginEmbedderPolicy: false,
-    })
-  );
+  app.use(helmet());
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -49,8 +37,10 @@ async function bootstrap() {
   app.enableCors({
     origin: origins,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Accept", "Origin"],
+    allowedHeaders: ["Content-Type", "Accept", "Origin", "Authorization"],
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 200,
   });
 
   const port = parseInt(process.env.PORT || "3001", 10);
