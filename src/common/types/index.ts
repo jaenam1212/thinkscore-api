@@ -6,7 +6,8 @@ export interface Answer {
   created_at: string;
   questions?: {
     id: number;
-    prompt: string;
+    content: string;
+    evaluation_criteria?: string[];
     is_active: boolean;
     created_at: string;
   };

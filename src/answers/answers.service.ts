@@ -88,13 +88,17 @@ export class AnswersService {
 
     // OpenAI로 평가 실행
     const questions = answer.questions as {
-      prompt: string;
+      content: string;
       evaluation_criteria?: string[];
     };
+
+    // TODO: 향후 문제별 특화된 평가 기준 사용 고려
+    // 현재는 모든 문제를 "논리적 사고, 창의적 사고, 일관성"으로 통일 평가
+    // 나중에 questions.evaluation_criteria를 활용하여 문제 유형별 세분화된 평가 가능
+    // 예: 윤리 문제 - 도덕적 추론, 가치 판단 / 과학 문제 - 개념 이해, 논리적 분석 등
     const evaluation = await this.openaiService.evaluateAnswer(
-      questions.prompt,
-      answer.content,
-      questions.evaluation_criteria || []
+      questions.content,
+      answer.content
     );
 
     // 점수를 scores 테이블에 저장
