@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { SupabaseModule } from "./supabase/supabase.module";
@@ -18,6 +19,23 @@ import { ForumModule } from "./forum/forum.module";
       isGlobal: true,
     }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([
+      {
+        name: "short",
+        ttl: 1000, // 1초
+        limit: 3, // 1초당 3회
+      },
+      {
+        name: "medium",
+        ttl: 10000, // 10초
+        limit: 20, // 10초당 20회
+      },
+      {
+        name: "long",
+        ttl: 60000, // 1분
+        limit: 100, // 1분당 100회
+      },
+    ]),
     SupabaseModule,
     AuthModule,
     ProfilesModule,
