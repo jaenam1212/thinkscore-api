@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsOptional,
-  IsNotEmpty,
-  IsUUID,
-  IsNumber,
-} from "class-validator";
+import { IsString, IsOptional, IsNotEmpty, IsNumber } from "class-validator";
 import { Type } from "class-transformer";
 
 export class CreatePostDto {
@@ -45,9 +39,10 @@ export class CreateCommentDto {
   @IsNotEmpty()
   content: string;
 
-  @IsUUID()
+  @IsNumber()
   @IsNotEmpty()
-  post_id: string;
+  @Type(() => Number)
+  post_id: number;
 }
 
 export class ForumPostResponseDto {

@@ -13,8 +13,6 @@ import {
 import type { Request as ExpressRequest } from "express";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { ForumService } from "./forum.service";
-import { ForumSeedService } from "./forum-seed.service";
-import { ForumMigrationService } from "./forum-migration.service";
 import {
   CreatePostDto,
   UpdatePostDto,
@@ -30,18 +28,14 @@ interface JwtRequest extends ExpressRequest {
 
 @Controller("forum")
 export class ForumController {
-  constructor(
-    private readonly forumService: ForumService,
-    private readonly forumSeedService: ForumSeedService,
-    private readonly forumMigrationService: ForumMigrationService
-  ) {}
+  constructor(private readonly forumService: ForumService) {}
 
   @UseGuards(JwtAuthGuard)
   @Post("posts")
   async createPost(
     @Body() createPostDto: CreatePostDto,
     @Request() req: JwtRequest
-  ) {
+  ): Promise<any> {
     return this.forumService.createPost(createPostDto, req.user.id);
   }
 
@@ -49,13 +43,13 @@ export class ForumController {
   async getPosts(
     @Query("question_id") questionId?: string,
     @Query("sort") sortBy?: "recent" | "popular" | "all"
-  ) {
+  ): Promise<any> {
     const questionIdNumber = questionId ? parseInt(questionId, 10) : undefined;
     return this.forumService.getPosts(questionIdNumber, sortBy);
   }
 
   @Get("posts/:id")
-  async getPost(@Param("id") id: string) {
+  async getPost(@Param("id") id: string): Promise<any> {
     return this.forumService.getPostById(+id);
   }
 
@@ -65,13 +59,16 @@ export class ForumController {
     @Param("id") id: string,
     @Body() updatePostDto: UpdatePostDto,
     @Request() req: JwtRequest
-  ) {
+  ): Promise<any> {
     return this.forumService.updatePost(+id, updatePostDto, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete("posts/:id")
-  async deletePost(@Param("id") id: string, @Request() req: JwtRequest) {
+  async deletePost(
+    @Param("id") id: string,
+    @Request() req: JwtRequest
+  ): Promise<{ success: boolean }> {
     return this.forumService.deletePost(+id, req.user.id);
   }
 
@@ -80,38 +77,55 @@ export class ForumController {
   async createComment(
     @Body() createCommentDto: CreateCommentDto,
     @Request() req: JwtRequest
-  ) {
+  ): Promise<any> {
     return this.forumService.createComment(createCommentDto, req.user.id);
   }
 
   @Get("posts/:id/comments")
-  async getComments(@Param("id") id: string) {
+  async getComments(@Param("id") id: string): Promise<any> {
     return this.forumService.getCommentsByPostId(+id);
   }
 
   @UseGuards(JwtAuthGuard)
+  @Delete("comments/:id")
+  async deleteComment(
+    @Param("id") id: string,
+    @Request() req: JwtRequest
+  ): Promise<{ success: boolean }> {
+    return this.forumService.deleteComment(+id, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post("posts/:id/like")
-  async toggleLike(@Param("id") id: string, @Request() req: JwtRequest) {
+  async toggleLike(
+    @Param("id") id: string,
+    @Request() req: JwtRequest
+  ): Promise<{ liked: boolean }> {
     return this.forumService.toggleLike(+id, req.user.id);
   }
 
-  @Post("migrate")
-  async migrateForumTables() {
-    return this.forumMigrationService.runForumMigrations();
-  }
-
-  @Post("seed")
-  async seedForumData() {
-    return this.forumSeedService.seedForumData();
+  @UseGuards(JwtAuthGuard)
+  @Get("posts/:id/like-status")
+  async getLikeStatus(
+    @Param("id") id: string,
+    @Request() req: JwtRequest
+  ): Promise<{ liked: boolean }> {
+    return await this.forumService.getLikeStatus(+id, req.user.id);
   }
 
   @Get("debug")
-  async debugConnection() {
+  async debugConnection(): Promise<any> {
     return this.forumService.debugConnection();
   }
 
   @Get("boards")
-  async getAvailableBoards() {
+  async getAvailableBoards(): Promise<any> {
     return this.forumService.getAvailableBoards();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("admin/check")
+  checkAdminStatus(): { isAdmin: boolean } {
+    return this.forumService.checkAdminStatus();
   }
 }

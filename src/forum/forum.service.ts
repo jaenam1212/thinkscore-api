@@ -20,13 +20,80 @@ interface ForumPostWithAuthor {
     username: string;
     avatar_url: string | null;
   };
+  comments_count: number;
+}
+
+interface ForumPostRaw {
+  id: number;
+  title: string;
+  content: string;
+  author_id: string;
+  category: string;
+  views_count: number;
+  likes_count: number;
+  created_at: string;
+  updated_at: string;
+  author?: {
+    username: string;
+    avatar_url: string | null;
+  };
+  comments_count?: Array<{ count: number }>;
+  question?: {
+    title: string;
+    description: string;
+  };
+}
+
+interface ForumPost {
+  id: number;
+  title: string;
+  content: string;
+  author_id: string;
+  category: string;
+  views_count: number;
+  likes_count: number;
+  created_at: string;
+  updated_at: string;
+  question_id?: number;
+}
+
+interface ForumComment {
+  id: number;
+  post_id: number;
+  content: string;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+  author?: {
+    username: string;
+    avatar_url: string | null;
+  };
+}
+
+interface ForumPostDetail extends ForumPost {
+  author: {
+    username: string;
+    avatar_url: string | null;
+  };
+  comments: ForumComment[];
+}
+
+interface Board {
+  id: number | null;
+  name: string;
+  type: "general" | "question";
+  description: string;
+  published_at: string | null;
 }
 
 @Injectable()
 export class ForumService {
   constructor(private supabase: SupabaseService) {}
 
-  async createPost(createPostDto: CreatePostDto, authorId: string) {
+  async createPost(
+    createPostDto: CreatePostDto,
+    authorId: string
+  ): Promise<ForumPost> {
     // question_id가 제공된 경우, 해당 문제가 포럼이 활성화된 문제인지 확인
     if (createPostDto.question_id) {
       const { data: questionData, error: questionError } = await this.supabase
@@ -42,7 +109,7 @@ export class ForumService {
       }
     }
 
-    const { data, error } = await this.supabase
+    const result = await this.supabase
       .getClient()
       .from("forum_posts")
       .insert({
@@ -55,19 +122,20 @@ export class ForumService {
       .select("*")
       .single();
 
-    if (error) throw error;
-    return data;
+    if (result.error) throw result.error;
+    return result.data as ForumPost;
   }
 
   async getPosts(
     questionId?: number,
     sortBy: "recent" | "popular" | "all" = "all"
-  ) {
+  ): Promise<ForumPostWithAuthor[]> {
     try {
       let query = this.supabase.getClient().from("forum_posts").select(`
         *,
         author:profiles!forum_posts_author_id_fkey(username, avatar_url),
-        question:questions(title, description)
+        question:questions(title, description),
+        comments_count:forum_comments(count)
       `);
 
       // questionId로 필터링
@@ -97,24 +165,38 @@ export class ForumService {
 
       console.log("Forum posts data:", data);
 
-      return (
-        data?.map((post: ForumPostWithAuthor) => ({
-          ...post,
-          author: post.author || { username: "익명", avatar_url: null },
-          comments_count: 0,
-        })) || []
-      );
+      type SupabaseForumPost = Array<{
+        id: number;
+        title: string;
+        content: string;
+        author_id: string;
+        category: string;
+        views_count: number;
+        likes_count: number;
+        created_at: string;
+        updated_at: string;
+        author?: { username: string; avatar_url: string | null };
+        comments_count?: Array<{ count: number }>;
+        question?: { title: string; description: string };
+      }>;
+
+      const typedData = data as SupabaseForumPost;
+      return (typedData?.map((post: ForumPostRaw) => ({
+        ...post,
+        author: post.author || { username: "익명", avatar_url: null },
+        comments_count: post.comments_count?.[0]?.count || 0,
+      })) || []) as ForumPostWithAuthor[];
     } catch (error) {
       console.error("getPosts error:", error);
       throw error;
     }
   }
 
-  async getPostById(id: number) {
+  async getPostById(id: number): Promise<ForumPostDetail> {
     // Increment view count using RPC function
     await this.supabase.getClient().rpc("increment_views", { post_id: id });
 
-    const { data, error } = await this.supabase
+    const result = await this.supabase
       .getClient()
       .from("forum_posts")
       .select(
@@ -130,12 +212,16 @@ export class ForumService {
       .eq("id", id)
       .single();
 
-    if (error) throw error;
-    return data;
+    if (result.error) throw result.error;
+    return result.data as ForumPostDetail;
   }
 
-  async updatePost(id: number, updatePostDto: UpdatePostDto, authorId: string) {
-    const { data, error } = await this.supabase
+  async updatePost(
+    id: number,
+    updatePostDto: UpdatePostDto,
+    authorId: string
+  ): Promise<ForumPost> {
+    const result = await this.supabase
       .getClient()
       .from("forum_posts")
       .update(updatePostDto)
@@ -144,11 +230,14 @@ export class ForumService {
       .select("*")
       .single();
 
-    if (error) throw error;
-    return data;
+    if (result.error) throw result.error;
+    return result.data as ForumPost;
   }
 
-  async deletePost(id: number, authorId: string) {
+  async deletePost(
+    id: number,
+    authorId: string
+  ): Promise<{ success: boolean }> {
     const { error } = await this.supabase
       .getClient()
       .from("forum_posts")
@@ -160,8 +249,11 @@ export class ForumService {
     return { success: true };
   }
 
-  async createComment(createCommentDto: CreateCommentDto, authorId: string) {
-    const { data, error } = await this.supabase
+  async createComment(
+    createCommentDto: CreateCommentDto,
+    authorId: string
+  ): Promise<ForumComment> {
+    const result = await this.supabase
       .getClient()
       .from("forum_comments")
       .insert({
@@ -177,11 +269,11 @@ export class ForumService {
       )
       .single();
 
-    if (error) throw error;
-    return data;
+    if (result.error) throw result.error;
+    return result.data as ForumComment;
   }
 
-  async getCommentsByPostId(postId: number) {
+  async getCommentsByPostId(postId: number): Promise<ForumComment[]> {
     const { data, error } = await this.supabase
       .getClient()
       .from("forum_comments")
@@ -195,20 +287,23 @@ export class ForumService {
       .order("created_at", { ascending: true });
 
     if (error) throw error;
-    return data;
+    return data as ForumComment[];
   }
 
-  async toggleLike(postId: number, userId: string) {
+  async toggleLike(
+    postId: number,
+    userId: string
+  ): Promise<{ liked: boolean }> {
     // Check if user already liked this post
-    const { data: existingLike } = await this.supabase
+    const result = await this.supabase
       .getClient()
       .from("forum_likes")
       .select("*")
       .eq("post_id", postId)
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
 
-    if (existingLike) {
+    if (result.data) {
       // Unlike
       await this.supabase
         .getClient()
@@ -239,7 +334,59 @@ export class ForumService {
     }
   }
 
-  async debugConnection() {
+  async getLikeStatus(
+    postId: number,
+    userId: string
+  ): Promise<{ liked: boolean }> {
+    const result = await this.supabase
+      .getClient()
+      .from("forum_likes")
+      .select("*")
+      .eq("post_id", postId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    return { liked: !!result.data };
+  }
+
+  async deleteComment(
+    commentId: number,
+    userId: string
+  ): Promise<{ success: boolean }> {
+    // 댓글 작성자 확인
+    const { data: comment, error: fetchError } = await this.supabase
+      .getClient()
+      .from("forum_comments")
+      .select("author_id")
+      .eq("id", commentId)
+      .single();
+
+    if (fetchError) throw new Error("댓글을 찾을 수 없습니다.");
+    if (comment?.author_id !== userId) {
+      throw new Error("본인이 작성한 댓글만 삭제할 수 있습니다.");
+    }
+
+    const { error } = await this.supabase
+      .getClient()
+      .from("forum_comments")
+      .delete()
+      .eq("id", commentId);
+
+    if (error) throw error;
+    return { success: true };
+  }
+
+  checkAdminStatus(): { isAdmin: boolean } {
+    // 간단한 관리자 체크 로직 (실제로는 데이터베이스에서 확인)
+    return { isAdmin: false };
+  }
+
+  async debugConnection(): Promise<{
+    connection?: boolean;
+    tableQuery?: { data: unknown; error: unknown };
+    basicQuery?: { data: unknown; error: unknown };
+    error?: string;
+  }> {
     try {
       console.log("=== Forum Debug Connection Start ===");
 
@@ -284,7 +431,7 @@ export class ForumService {
     }
   }
 
-  async getAvailableBoards() {
+  async getAvailableBoards(): Promise<Board[]> {
     try {
       // 포럼이 활성화된 문제들 조회
       const { data: questions, error } = await this.supabase
@@ -308,16 +455,23 @@ export class ForumService {
           description: "모든 주제에 대해 자유롭게 토론하세요",
           published_at: null,
         },
-        ...(questions || []).map((question) => ({
-          id: question.id,
-          name: question.title,
-          type: "question",
-          description: question.description,
-          published_at: question.published_at,
-        })),
+        ...(questions || []).map(
+          (question: {
+            id: number;
+            title: string;
+            description: string;
+            published_at: string;
+          }) => ({
+            id: question.id,
+            name: question.title,
+            type: "question" as const,
+            description: question.description,
+            published_at: question.published_at,
+          })
+        ),
       ];
 
-      return boards;
+      return boards as Board[];
     } catch (error) {
       console.error("getAvailableBoards error:", error);
       throw error;
