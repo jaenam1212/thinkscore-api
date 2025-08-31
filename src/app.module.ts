@@ -12,6 +12,7 @@ import { AnswersModule } from "./answers/answers.module";
 import { ScoresModule } from "./scores/scores.module";
 import { OpenAIModule } from "./openai/openai.module";
 import { ForumModule } from "./forum/forum.module";
+import { RankingsModule } from "./rankings/rankings.module";
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ForumModule } from "./forum/forum.module";
     ScoresModule,
     OpenAIModule,
     ForumModule,
+    RankingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
