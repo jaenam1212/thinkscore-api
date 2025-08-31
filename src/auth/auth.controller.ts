@@ -121,6 +121,13 @@ export class AuthController {
     return this.authService.kakaoLogin(body.accessToken, body.profile);
   }
 
+  @Post("naver")
+  async naverLogin(
+    @Body() body: { accessToken: string; profile: NaverProfile }
+  ) {
+    return this.authService.naverLogin(body.accessToken, body.profile);
+  }
+
   @Post("migrate-social")
   async migrateSocialLogin() {
     return this.authMigrationService.addSocialLoginFields();
@@ -132,4 +139,11 @@ interface KakaoProfile {
   nickname: string;
   email: string;
   profileImage: string;
+}
+
+interface NaverProfile {
+  id: string;
+  nickname: string;
+  email: string;
+  profile_image: string;
 }
