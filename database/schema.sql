@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS answers (
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   question_id INTEGER REFERENCES questions(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
+  is_anonymous BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

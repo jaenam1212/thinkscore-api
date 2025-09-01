@@ -67,15 +67,32 @@ export class AnswersService {
   }
 
   async createAnswer(answerData: CreateAnswerDto): Promise<Answer> {
-    const { data, error } = await this.supabaseService
-      .getClient()
-      .from("answers")
-      .insert(answerData)
-      .select()
-      .single();
+    try {
+      // 익명 사용자 처리 - user_id가 없으면 null로 설정
+      const insertData = {
+        question_id: answerData.question_id,
+        content: answerData.content,
+        user_id: answerData.user_id || null,
+        is_anonymous: answerData.is_anonymous || false,
+      };
 
-    if (error) throw new Error(error.message);
-    return data as Answer;
+      const { data, error } = await this.supabaseService
+        .getClient()
+        .from("answers")
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Database error details:", error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      return data as Answer;
+    } catch (error) {
+      console.error("CreateAnswer error:", error);
+      throw error;
+    }
   }
 
   async evaluateAnswer(answerId: number): Promise<any> {
