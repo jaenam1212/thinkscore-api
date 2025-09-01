@@ -118,8 +118,8 @@ export class RankingsService {
           const profile = profilesMap.get(userId);
           return {
             id: userId,
-            username: profile?.username || "Unknown",
-            display_name: profile?.display_name || "Unknown",
+            username: profile?.username || "비회원",
+            display_name: profile?.display_name || "비회원",
             total_score: userData.total_score,
             average_score: userData.total_score / userData.answer_count,
             answer_count: userData.answer_count,
@@ -196,8 +196,8 @@ export class RankingsService {
       const profile = profilesMap.get(score.answers.user_id);
       return {
         id: score.answers.user_id,
-        username: profile?.username || "Unknown",
-        display_name: profile?.display_name || "Unknown",
+        username: profile?.username || "비회원",
+        display_name: profile?.display_name || "비회원",
         question_score: score.score,
         question_answer_count: 1,
         total_score: 0,
