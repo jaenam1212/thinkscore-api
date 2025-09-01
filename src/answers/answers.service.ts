@@ -115,7 +115,10 @@ export class AnswersService {
     // 예: 윤리 문제 - 도덕적 추론, 가치 판단 / 과학 문제 - 개념 이해, 논리적 분석 등
     const evaluation = await this.openaiService.evaluateAnswer(
       questions.content,
-      answer.content
+      answer.content,
+      answer.user_id,
+      answer.question_id,
+      answer.id
     );
 
     // 점수를 scores 테이블에 저장

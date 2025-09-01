@@ -1,12 +1,26 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { OpenAI } from "openai";
+import { SupabaseService } from "../supabase/supabase.service";
+
+interface OpenAILogEntry {
+  id: number;
+  user_id?: string;
+  question_id?: number;
+  answer_id?: number;
+  prompt: string;
+  model: string;
+  status: string;
+}
 
 @Injectable()
 export class OpenAIService {
   private openai: OpenAI;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private supabaseService: SupabaseService
+  ) {
     this.openai = new OpenAI({
       apiKey: this.configService.get<string>("OPENAI_API_KEY"),
     });
@@ -14,7 +28,10 @@ export class OpenAIService {
 
   async evaluateAnswer(
     question: string,
-    answer: string
+    answer: string,
+    userId?: string,
+    questionId?: number,
+    answerId?: number
   ): Promise<{
     score: number;
     feedback: string;
@@ -51,15 +68,41 @@ export class OpenAIService {
 }
 `;
 
+    const startTime = Date.now();
+    const model = "gpt-5-nano";
+
+    // Create initial log entry
+    const supabase = this.supabaseService.getClient();
+    const result = await supabase
+      .from("openai_logs")
+      .insert({
+        user_id: userId,
+        question_id: questionId,
+        answer_id: answerId,
+        prompt: input,
+        model: model,
+        status: "pending",
+      })
+      .select()
+      .single();
+
+    const logEntry = result.data as OpenAILogEntry;
+
+    if (!logEntry) {
+      throw new Error("로그 엔트리 생성에 실패했습니다.");
+    }
+
     try {
       const response = await this.openai.responses.create({
-        model: "gpt-5-nano",
+        model: model,
         input: input,
         reasoning: { effort: "low" },
         text: { verbosity: "low" },
       });
 
+      const responseTime = Date.now() - startTime;
       const content = response.output_text;
+
       if (!content) {
         throw new Error("OpenAI 응답이 비어있습니다.");
       }
@@ -69,9 +112,43 @@ export class OpenAIService {
         feedback: string;
         criteriaScores: Record<string, number>;
       };
+
+      // Update log with successful response
+      if (logEntry) {
+        await supabase
+          .from("openai_logs")
+          .update({
+            response_text: content,
+            score: result.score,
+            feedback: result.feedback,
+            criteria_scores: result.criteriaScores,
+            tokens_used: response.usage?.total_tokens || null,
+            response_time_ms: responseTime,
+            status: "success",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", logEntry.id);
+      }
+
       return result;
     } catch (error) {
+      const responseTime = Date.now() - startTime;
       console.error("OpenAI API Error:", error);
+
+      // Update log with error information
+      if (logEntry) {
+        await supabase
+          .from("openai_logs")
+          .update({
+            status: "error",
+            error_message:
+              error instanceof Error ? error.message : "Unknown error",
+            response_time_ms: responseTime,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", logEntry.id);
+      }
+
       throw new Error("답변 평가 중 오류가 발생했습니다.");
     }
   }
