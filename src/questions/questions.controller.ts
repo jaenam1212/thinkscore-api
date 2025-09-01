@@ -14,6 +14,11 @@ export class QuestionsController {
     return this.questionsService.getActiveQuestions();
   }
 
+  @Get("list")
+  async getQuestionsList() {
+    return this.questionsService.getQuestionsForSelection();
+  }
+
   @Get("today")
   async getTodaysQuestion() {
     return this.questionsService.getTodaysQuestion();

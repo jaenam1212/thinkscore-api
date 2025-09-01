@@ -163,6 +163,29 @@ export class QuestionsService {
     return data[questionIndex] as Question;
   }
 
+  // 문제 선택용 목록 (간단한 정보만)
+  async getQuestionsForSelection() {
+    const { data, error } = await this.supabaseService
+      .getClient()
+      .from("questions")
+      .select("id, title, description, category, difficulty, tags")
+      .eq("is_active", true)
+      .order("id", { ascending: true });
+
+    if (error) throw new Error(error.message);
+
+    return (
+      data?.map((question) => ({
+        id: question.id,
+        title: question.title,
+        description: question.description,
+        category: question.category,
+        difficulty: question.difficulty,
+        tags: question.tags,
+      })) || []
+    );
+  }
+
   // 랜덤 문제 가져오기
   async getRandomQuestion(): Promise<Question> {
     const { data, error } = await this.supabaseService
