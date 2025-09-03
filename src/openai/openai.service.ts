@@ -37,6 +37,21 @@ export class OpenAIService {
     feedback: string;
     criteriaScores: Record<string, number>;
   }> {
+    const bannedBullets = /[•●○◦▪▫■□◆◇▶▷➤➔\-\u2022]/;
+    const bannedEmojis = /\p{Extended_Pictographic}/u;
+
+    if (bannedBullets.test(answer) || bannedEmojis.test(answer)) {
+      return {
+        score: 0,
+        feedback: "AI 치팅이 의심됩니다",
+        criteriaScores: {
+          "논리적 사고": 0,
+          "창의적 사고": 0,
+          일관성: 0,
+        },
+      };
+    }
+
     const input = `
 다음 철학적 질문에 대한 답변을 3가지 기준으로 평가하세요.
 
@@ -125,7 +140,7 @@ export class OpenAIService {
             tokens_used: response.usage?.total_tokens || null,
             response_time_ms: responseTime,
             status: "success",
-            updated_at: new Date().toISOString(),
+            updated_at: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString(),
           })
           .eq("id", logEntry.id);
       }
@@ -144,7 +159,7 @@ export class OpenAIService {
             error_message:
               error instanceof Error ? error.message : "Unknown error",
             response_time_ms: responseTime,
-            updated_at: new Date().toISOString(),
+            updated_at: new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString(),
           })
           .eq("id", logEntry.id);
       }
