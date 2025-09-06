@@ -8,6 +8,7 @@ import * as bcrypt from "bcrypt";
 import { SupabaseService } from "../supabase/supabase.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
+import { AppleService } from "./apple.service";
 
 interface ProfileData {
   display_name?: string;
@@ -52,17 +53,12 @@ interface NaverProfile {
   profile_image: string;
 }
 
-interface AppleProfile {
-  id: string;
-  name?: string;
-  email: string;
-}
-
 @Injectable()
 export class AuthService {
   constructor(
     private readonly supabaseService: SupabaseService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly appleService: AppleService
   ) {}
 
   async signInWithProvider(provider: string) {
@@ -409,18 +405,36 @@ export class AuthService {
     return this.generateJWTResponse(user);
   }
 
-  async appleLogin(accessToken: string, profile: AppleProfile) {
-    let user = await this.findUserByAppleId(profile.id);
+  async appleLogin(
+    idToken: string,
+    userData?: {
+      name?: { firstName?: string; lastName?: string };
+      email?: string;
+    }
+  ) {
+    const clientId = process.env.APPLE_CLIENT_ID;
+    if (!clientId) {
+      throw new Error("Apple Client ID not configured");
+    }
+
+    const tokenData = await this.appleService.verifyIdToken(idToken, clientId);
+
+    let user = await this.findUserByAppleId(tokenData.sub);
+    const email = userData?.email || tokenData.email;
+
+    if (!email) {
+      throw new Error("Email is required for Apple login");
+    }
 
     if (!user) {
-      user = await this.findUserByEmail(profile.email);
+      user = await this.findUserByEmail(email);
 
       if (user) {
         const { data, error } = await this.supabaseService
           .getClient()
           .from("profiles")
           .update({
-            apple_id: profile.id,
+            apple_id: tokenData.sub,
             provider: "apple",
             last_login_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -432,14 +446,18 @@ export class AuthService {
         if (error) throw new Error(error.message);
         user = data as Profile;
       } else {
+        const displayName = userData?.name
+          ? `${userData.name.firstName || ""} ${userData.name.lastName || ""}`.trim()
+          : email.split("@")[0];
+
         const { data, error } = await this.supabaseService
           .getClient()
           .from("profiles")
           .insert({
-            email: profile.email,
-            display_name: profile.name || profile.email.split("@")[0],
-            username: profile.name || profile.email.split("@")[0],
-            apple_id: profile.id,
+            email,
+            display_name: displayName,
+            username: displayName,
+            apple_id: tokenData.sub,
             provider: "apple",
             last_login_at: new Date().toISOString(),
             created_at: new Date().toISOString(),

@@ -128,10 +128,23 @@ export class AuthController {
     return this.authService.naverLogin(body.accessToken, body.profile);
   }
 
+  @Post("apple")
+  async appleLogin(@Body() body: { idToken: string; user?: AppleUserData }) {
+    return this.authService.appleLogin(body.idToken, body.user);
+  }
+
   @Post("migrate-social")
   async migrateSocialLogin() {
     return this.authMigrationService.addSocialLoginFields();
   }
+}
+
+interface AppleUserData {
+  name?: {
+    firstName?: string;
+    lastName?: string;
+  };
+  email?: string;
 }
 
 interface KakaoProfile {
