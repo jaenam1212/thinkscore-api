@@ -376,9 +376,46 @@ export class ForumService {
     return { success: true };
   }
 
-  checkAdminStatus(): { isAdmin: boolean } {
-    // 간단한 관리자 체크 로직 (실제로는 데이터베이스에서 확인)
-    return { isAdmin: false };
+  async checkAdminStatus(userId: string): Promise<{ isAdmin: boolean }> {
+    try {
+      const { data, error } = await this.supabase
+        .getClient()
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        console.error("Admin status check error:", error);
+        return { isAdmin: false };
+      }
+
+      return { isAdmin: data?.is_admin || false };
+    } catch (error) {
+      console.error("checkAdminStatus error:", error);
+      return { isAdmin: false };
+    }
+  }
+
+  async adminDeletePost(
+    postId: number,
+    adminUserId: string
+  ): Promise<{ success: boolean }> {
+    // 관리자 권한 확인
+    const adminStatus = await this.checkAdminStatus(adminUserId);
+    if (!adminStatus.isAdmin) {
+      throw new Error("관리자 권한이 필요합니다.");
+    }
+
+    // 게시글 삭제 (작성자 확인 없이)
+    const { error } = await this.supabase
+      .getClient()
+      .from("forum_posts")
+      .delete()
+      .eq("id", postId);
+
+    if (error) throw error;
+    return { success: true };
   }
 
   async debugConnection(): Promise<{

@@ -125,7 +125,18 @@ export class ForumController {
 
   @UseGuards(JwtAuthGuard)
   @Get("admin/check")
-  checkAdminStatus(): { isAdmin: boolean } {
-    return this.forumService.checkAdminStatus();
+  async checkAdminStatus(
+    @Request() req: JwtRequest
+  ): Promise<{ isAdmin: boolean }> {
+    return this.forumService.checkAdminStatus(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete("admin/posts/:id")
+  async adminDeletePost(
+    @Param("id") id: string,
+    @Request() req: JwtRequest
+  ): Promise<{ success: boolean }> {
+    return this.forumService.adminDeletePost(+id, req.user.id);
   }
 }
