@@ -3,7 +3,6 @@ import { SupabaseService } from "../supabase/supabase.service";
 
 export interface RankingUser {
   id: string;
-  username: string;
   display_name: string;
   total_score: number;
   average_score: number;
@@ -13,7 +12,6 @@ export interface RankingUser {
 
 export interface QuestionRankingUser {
   id: string;
-  username: string;
   display_name: string;
   question_score: number;
   question_answer_count: number;
@@ -60,7 +58,7 @@ export class RankingsService {
       const { data: profilesData, error: profilesError } = await this.supabase
         .getClient()
         .from("profiles")
-        .select("id, username, display_name");
+        .select("id, display_name");
 
       if (profilesError) {
         console.error("Profiles query error:", profilesError);
@@ -77,7 +75,6 @@ export class RankingsService {
       }>;
       type ProfileData = Array<{
         id: string;
-        username: string;
         display_name: string;
       }>;
 
@@ -118,8 +115,8 @@ export class RankingsService {
           const profile = profilesMap.get(userId);
           return {
             id: userId,
-            username: profile?.username || "비회원",
-            display_name: profile?.display_name || "비회원",
+            display_name:
+              profile?.display_name || (profile ? "비공개" : "비회원"),
             total_score: userData.total_score,
             average_score: userData.total_score / userData.answer_count,
             answer_count: userData.answer_count,
@@ -175,14 +172,13 @@ export class RankingsService {
     const { data: profilesData, error: profilesError } = await this.supabase
       .getClient()
       .from("profiles")
-      .select("id, username, display_name")
+      .select("id, display_name")
       .in("id", userIds);
 
     if (profilesError) throw profilesError;
 
     type ProfileData = Array<{
       id: string;
-      username: string;
       display_name: string;
     }>;
     const typedProfiles = profilesData as ProfileData;
@@ -196,8 +192,7 @@ export class RankingsService {
       const profile = profilesMap.get(score.answers.user_id);
       return {
         id: score.answers.user_id,
-        username: profile?.username || "비회원",
-        display_name: profile?.display_name || "비회원",
+        display_name: profile?.display_name || (profile ? "비공개" : "비회원"),
         question_score: score.score,
         question_answer_count: 1,
         total_score: 0,
@@ -322,7 +317,7 @@ export class RankingsService {
     const { data: topScorer, error: topScorerError } = await this.supabase
       .getClient()
       .from("profiles")
-      .select("username, total_score")
+      .select("display_name, total_score")
       .order("total_score", { ascending: false })
       .limit(1)
       .single();
@@ -331,7 +326,7 @@ export class RankingsService {
 
     const typedProfiles = profiles as Array<{ total_score: number }>;
     const typedTopScorer = topScorer as {
-      username: string;
+      display_name: string;
       total_score: number;
     };
 
@@ -345,7 +340,7 @@ export class RankingsService {
       total_users: totalUsers || 0,
       total_answers: totalAnswers || 0,
       average_score: Math.round(averageScore * 100) / 100,
-      top_scorer_name: typedTopScorer.username,
+      top_scorer_name: typedTopScorer.display_name || "비공개",
       top_score: typedTopScorer.total_score,
     };
   }
