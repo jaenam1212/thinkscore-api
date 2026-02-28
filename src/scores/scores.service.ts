@@ -1,4 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateScoreDto } from "../common/dto/scores.dto";
 import { Score } from "../common/types";
@@ -15,7 +19,7 @@ export class ScoresService {
       .eq("answer_id", answerId)
       .order("created_at", { ascending: false });
 
-    if (error) throw new Error(error.message);
+    if (error) throw new InternalServerErrorException(error.message);
     return (data as Score[]) || [];
   }
 
@@ -36,7 +40,7 @@ export class ScoresService {
       .eq("answers.user_id", userId)
       .order("created_at", { ascending: false });
 
-    if (error) throw new Error(error.message);
+    if (error) throw new InternalServerErrorException(error.message);
     return (data as Score[]) || [];
   }
 
@@ -57,7 +61,7 @@ export class ScoresService {
       .eq("id", id)
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) throw new NotFoundException(error.message);
     return data as Score;
   }
 
@@ -69,7 +73,7 @@ export class ScoresService {
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) throw new InternalServerErrorException(error.message);
     return data as Score;
   }
 }

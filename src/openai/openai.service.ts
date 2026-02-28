@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { OpenAI } from "openai";
 import { SupabaseService } from "../supabase/supabase.service";
@@ -16,6 +16,7 @@ interface OpenAILogEntry {
 @Injectable()
 export class OpenAIService {
   private openai: OpenAI;
+  private readonly logger = new Logger(OpenAIService.name);
 
   constructor(
     private configService: ConfigService,
@@ -37,6 +38,90 @@ export class OpenAIService {
     feedback: string;
     criteriaScores: Record<string, number>;
   }> {
+    // 1. 숫자만 입력된 경우
+    const onlyNumbers = /^[\d\s.,+-]+$/.test(answer.trim());
+    if (onlyNumbers) {
+      return {
+        score: 0,
+        feedback:
+          "숫자만 입력된 답변은 평가할 수 없습니다. 생각과 근거를 문장으로 서술해 주세요.",
+        criteriaScores: {
+          "논리적 사고": 0,
+          "창의적 사고": 0,
+          일관성: 0,
+        },
+      };
+    }
+
+    // 2. 무의미한 문자 (키보드 난타, 반복 문자 등)
+    const koreanOrHangulJamo = /[가-힣ㄱ-ㅎㅏ-ㅣ]/;
+    const meaningfulWord = /[a-zA-Z가-힣]{2,}/;
+    const hasMinLength = answer.trim().length >= 10;
+    const looksLikeRandomChars =
+      !koreanOrHangulJamo.test(answer) &&
+      !/[a-zA-Z]{3,}/.test(answer) &&
+      !/\d/.test(answer);
+    const noMeaningfulContent =
+      !meaningfulWord.test(answer) && answer.trim().length > 0;
+    if (
+      (looksLikeRandomChars && hasMinLength) ||
+      (noMeaningfulContent && !/[가-힣]/.test(answer))
+    ) {
+      return {
+        score: 0,
+        feedback:
+          "의미 있는 서술이 감지되지 않았습니다. 질문에 대한 생각을 문장으로 표현해 주세요.",
+        criteriaScores: {
+          "논리적 사고": 0,
+          "창의적 사고": 0,
+          일관성: 0,
+        },
+      };
+    }
+
+    // 3. 욕설 및 부적절한 내용
+    const profanityPatterns = [
+      // 한국어 욕설
+      /시발|씨발|ㅅㅂ|씹|개새|개쌔|병신|ㅂㅅ|존나|ㅈㄴ|지랄|ㅈㄹ|미친|ㅁㅊ|새끼|ㅅㄲ|니미|느금|보지|자지|창녀|걸레|년|놈|찐따|장애|빻은|빠가|빡대가리|꺼져|닥쳐/i,
+      // 영어 욕설
+      /\bfuck|\bshit|\bass\b|\bbitch|\bcunt|\bdick\b|\bpussy|\bfaggot|\bwhore/i,
+    ];
+    const hasProfanity = profanityPatterns.some((pattern) =>
+      pattern.test(answer)
+    );
+
+    // 4. 무성의한 답변 ("모르겠다", "모름", "패스" 등 단순 회피)
+    const dismissivePatterns =
+      /^(모르겠|모르겟|몰라|모름|모르|패스|pass|skip|그냥|없음|없어|ㅁㄹ|ㅁ|\?+|\.\.+|-+){1,3}[.!?\s]*$/i;
+    const isDismissive =
+      dismissivePatterns.test(answer.trim()) && answer.trim().length < 20;
+
+    if (hasProfanity) {
+      return {
+        score: 0,
+        feedback:
+          "부적절한 내용이 포함되어 있어 평가할 수 없습니다. 건전한 언어로 다시 작성해 주세요.",
+        criteriaScores: {
+          "논리적 사고": 0,
+          "창의적 사고": 0,
+          일관성: 0,
+        },
+      };
+    }
+
+    if (isDismissive) {
+      return {
+        score: 0,
+        feedback:
+          "답변이 너무 짧거나 성의 없이 작성되었습니다. 질문에 대한 구체적인 생각을 서술해 주세요.",
+        criteriaScores: {
+          "논리적 사고": 0,
+          "창의적 사고": 0,
+          일관성: 0,
+        },
+      };
+    }
+
     const bannedBullets = /[•●○◦▪▫■□◆◇▶▷➤➔\-\u2022]/;
     const bannedEmojis = /\p{Extended_Pictographic}/u;
 
@@ -151,7 +236,7 @@ export class OpenAIService {
       return result;
     } catch (error) {
       const responseTime = Date.now() - startTime;
-      console.error("OpenAI API Error:", error);
+      this.logger.error("OpenAI API Error:", error);
 
       // Update log with error information
       if (logEntry) {

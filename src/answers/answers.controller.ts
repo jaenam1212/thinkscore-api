@@ -1,6 +1,15 @@
-import { Controller, Get, Post, Body, Param } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Headers,
+  Req,
+} from "@nestjs/common";
 import { AnswersService } from "./answers.service";
-import type { CreateAnswerDto } from "../common/dto/answers.dto";
+import { CreateAnswerDto } from "../common/dto/answers.dto";
+import type { Request } from "express";
 
 @Controller("answers")
 export class AnswersController {
@@ -17,8 +26,27 @@ export class AnswersController {
   }
 
   @Post()
-  async createAnswer(@Body() answerData: CreateAnswerDto) {
-    return this.answersService.createAnswer(answerData);
+  async createAnswer(
+    @Body() answerData: CreateAnswerDto,
+    @Headers("authorization") authorizationHeader: string | undefined,
+    @Req() req: Request
+  ) {
+    const forwardedFor = req.headers["x-forwarded-for"];
+    const forwardedIp =
+      typeof forwardedFor === "string"
+        ? forwardedFor.split(",")[0]?.trim()
+        : Array.isArray(forwardedFor)
+          ? forwardedFor[0]
+          : undefined;
+
+    return this.answersService.createAnswer(answerData, {
+      authorizationHeader,
+      ip: forwardedIp || req.ip,
+      userAgent:
+        typeof req.headers["user-agent"] === "string"
+          ? req.headers["user-agent"]
+          : undefined,
+    });
   }
 
   @Get(":id")
@@ -27,7 +55,12 @@ export class AnswersController {
   }
 
   @Post(":id/evaluate")
-  async evaluateAnswer(@Param("id") id: string) {
+  async evaluateAnswer(@Param("id") id: string): Promise<{
+    score: number;
+    feedback: string;
+    criteriaScores: Record<string, unknown>;
+    scoreRecord?: unknown;
+  }> {
     return this.answersService.evaluateAnswer(parseInt(id, 10));
   }
 }

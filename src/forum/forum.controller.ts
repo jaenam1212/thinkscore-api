@@ -12,6 +12,7 @@ import {
 } from "@nestjs/common";
 import type { Request as ExpressRequest } from "express";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { AdminGuard } from "../auth/guards/admin.guard";
 import { ForumService } from "./forum.service";
 import {
   CreatePostDto,
@@ -113,17 +114,12 @@ export class ForumController {
     return await this.forumService.getLikeStatus(+id, req.user.id);
   }
 
-  @Get("debug")
-  async debugConnection(): Promise<any> {
-    return this.forumService.debugConnection();
-  }
-
   @Get("boards")
   async getAvailableBoards(): Promise<any> {
     return this.forumService.getAvailableBoards();
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get("admin/check")
   async checkAdminStatus(
     @Request() req: JwtRequest
@@ -131,7 +127,7 @@ export class ForumController {
     return this.forumService.checkAdminStatus(req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Delete("admin/posts/:id")
   async adminDeletePost(
     @Param("id") id: string,

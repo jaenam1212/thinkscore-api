@@ -16,13 +16,16 @@ import { LocalStrategy } from "./strategies/local.strategy";
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret:
-          configService.get<string>("JWT_SECRET") || "your-fallback-secret-key",
-        signOptions: {
-          expiresIn: "7d",
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const secret = configService.get<string>("JWT_SECRET");
+        if (!secret) {
+          throw new Error("JWT_SECRET environment variable is required");
+        }
+        return {
+          secret,
+          signOptions: { expiresIn: "1h" },
+        };
+      },
       inject: [ConfigService],
     }),
   ],

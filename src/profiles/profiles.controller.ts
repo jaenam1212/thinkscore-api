@@ -1,9 +1,16 @@
-import { Controller, Get, Post, Body, Param, Put } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  UseGuards,
+  Request,
+} from "@nestjs/common";
 import { ProfilesService } from "./profiles.service";
-import type {
-  CreateProfileDto,
-  UpdateProfileDto,
-} from "../common/dto/profiles.dto";
+import { CreateProfileDto, UpdateProfileDto } from "../common/dto/profiles.dto";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 @Controller("profiles")
 export class ProfilesController {
@@ -14,11 +21,13 @@ export class ProfilesController {
     return this.profilesService.getProfile(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   async createProfile(@Body() profileData: CreateProfileDto) {
     return this.profilesService.createProfile(profileData);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Put(":id")
   async updateProfile(
     @Param("id") id: string,

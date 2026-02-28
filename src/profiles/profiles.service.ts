@@ -1,4 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import { CreateProfileDto, UpdateProfileDto } from "../common/dto/profiles.dto";
 import { Profile } from "../common/types";
@@ -15,8 +19,8 @@ export class ProfilesService {
       .eq("id", id)
       .single();
 
-    if (error) throw new Error(error.message);
-    return data as Profile;
+    if (error) throw new NotFoundException(error.message);
+    return data as unknown as Profile;
   }
 
   async createProfile(profileData: CreateProfileDto): Promise<Profile> {
@@ -27,8 +31,8 @@ export class ProfilesService {
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
-    return data as Profile;
+    if (error) throw new InternalServerErrorException(error.message);
+    return data as unknown as Profile;
   }
 
   async updateProfile(
@@ -43,7 +47,7 @@ export class ProfilesService {
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
-    return data as Profile;
+    if (error) throw new InternalServerErrorException(error.message);
+    return data as unknown as Profile;
   }
 }

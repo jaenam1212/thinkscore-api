@@ -125,3 +125,58 @@ export interface Score {
   scorer_id?: string;
   is_ai_score: boolean;
 }
+
+export interface ForumPostWithAuthor extends ForumPost {
+  comments_count: number;
+  question?: {
+    title: string;
+    description: string;
+  };
+}
+
+export interface ForumPostRaw {
+  id: number;
+  title: string;
+  content: string;
+  author_id: string;
+  category: string;
+  views_count: number;
+  likes_count: number;
+  created_at: string;
+  updated_at: string;
+  author?: {
+    username: string;
+    avatar_url: string | null;
+  };
+  comments_count?: Array<{ count: number }>;
+  question?: {
+    title: string;
+    description: string;
+  };
+}
+
+export interface ForumPostDetail {
+  id: number;
+  title: string;
+  content: string;
+  author_id: string;
+  category: string;
+  views_count: number;
+  likes_count: number;
+  created_at: string;
+  updated_at: string;
+  question_id?: number;
+  author: {
+    username: string;
+    avatar_url: string | null;
+  };
+  comments: ForumComment[];
+}
+
+export interface ForumBoardItem {
+  id: number | null;
+  name: string;
+  type: "general" | "question";
+  description: string;
+  published_at: string | null;
+}

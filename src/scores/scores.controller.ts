@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, Param } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param, UseGuards } from "@nestjs/common";
 import { ScoresService } from "./scores.service";
-import type { CreateScoreDto } from "../common/dto/scores.dto";
+import { CreateScoreDto } from "../common/dto/scores.dto";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 @Controller("scores")
 export class ScoresController {
@@ -16,6 +17,7 @@ export class ScoresController {
     return this.scoresService.getUserScores(userId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   async createScore(@Body() scoreData: CreateScoreDto) {
     return this.scoresService.createScore(scoreData);

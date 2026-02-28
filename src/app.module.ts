@@ -13,7 +13,7 @@ import { ScoresModule } from "./scores/scores.module";
 import { OpenAIModule } from "./openai/openai.module";
 import { ForumModule } from "./forum/forum.module";
 import { RankingsModule } from "./rankings/rankings.module";
-
+import { PaymentsModule } from "./payments/payments.module";
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -46,6 +46,7 @@ import { RankingsModule } from "./rankings/rankings.module";
     OpenAIModule,
     ForumModule,
     RankingsModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

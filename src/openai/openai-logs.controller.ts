@@ -11,11 +11,13 @@ import {
 interface AuthenticatedRequest extends Request {
   user: {
     sub: string;
-    [key: string]: any;
+    userId: string;
   };
 }
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { AdminGuard } from "../auth/guards/admin.guard";
 import { OpenAILogsService } from "./openai-logs.service";
+import { BadRequestException } from "@nestjs/common";
 
 @Controller("openai-logs")
 @UseGuards(JwtAuthGuard)
@@ -45,12 +47,12 @@ export class OpenAILogsController {
     return this.openaiLogsService.getUsageStats(userId, startDate, endDate);
   }
 
+  @UseGuards(AdminGuard)
   @Get("system-stats")
   async getSystemStats(
     @Query("start_date") startDate?: string,
     @Query("end_date") endDate?: string
   ) {
-    // Note: 관리자 권한 체크 필요 시 추가 가드 적용
     return this.openaiLogsService.getUsageStats(undefined, startDate, endDate);
   }
 
@@ -60,13 +62,13 @@ export class OpenAILogsController {
     return this.openaiLogsService.getLogsByStatus("error", limitNum);
   }
 
+  @UseGuards(AdminGuard)
   @Delete("cleanup/:days")
   async cleanupOldLogs(@Param("days") days: string) {
     const daysNum = parseInt(days, 10);
     if (isNaN(daysNum) || daysNum < 1) {
-      throw new Error("Invalid days parameter");
+      throw new BadRequestException("Invalid days parameter");
     }
-
     const deletedCount = await this.openaiLogsService.cleanupOldLogs(daysNum);
     return {
       message: `Successfully deleted ${deletedCount} log entries older than ${daysNum} days`,

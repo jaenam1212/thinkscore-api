@@ -1,4 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
@@ -33,7 +38,7 @@ export class QuestionsService {
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
-    if (error) throw new Error(error.message);
+    if (error) throw new InternalServerErrorException(error.message);
     return (data as Question[]) || [];
   }
 
@@ -45,7 +50,7 @@ export class QuestionsService {
       .eq("id", id)
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) throw new NotFoundException(error.message);
     return data as Question;
   }
 
@@ -57,7 +62,7 @@ export class QuestionsService {
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) throw new InternalServerErrorException(error.message);
     return data as Question;
   }
 
@@ -73,7 +78,7 @@ export class QuestionsService {
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) throw new InternalServerErrorException(error.message);
     return data as Question;
   }
 
@@ -101,7 +106,7 @@ export class QuestionsService {
         );
       }
 
-      console.log("Using seed file path:", seedFilePath);
+      this.logger.log(`Using seed file path: ${seedFilePath}`);
       const seedData = JSON.parse(
         fs.readFileSync(seedFilePath, "utf8")
       ) as SeedQuestion[];
@@ -131,11 +136,11 @@ export class QuestionsService {
           }))
         );
 
-      if (error) throw new Error(error.message);
+      if (error) throw new InternalServerErrorException(error.message);
 
       return `Successfully seeded ${seedData.length} questions`;
     } catch (error) {
-      throw new Error(`Failed to seed questions: ${(error as Error).message}`);
+      throw new InternalServerErrorException((error as Error).message);
     }
   }
 
@@ -147,10 +152,10 @@ export class QuestionsService {
       .select("*")
       .eq("is_active", true);
 
-    if (error) throw new Error(error.message);
+    if (error) throw new InternalServerErrorException(error.message);
 
     if (!data || data.length === 0) {
-      throw new Error("No active questions found");
+      throw new NotFoundException("No active questions found");
     }
 
     const today = new Date();
@@ -172,7 +177,7 @@ export class QuestionsService {
       .eq("is_active", true)
       .order("id", { ascending: true });
 
-    if (error) throw new Error(error.message);
+    if (error) throw new InternalServerErrorException(error.message);
 
     return (
       data?.map((question) => ({
@@ -194,10 +199,10 @@ export class QuestionsService {
       .select("*")
       .eq("is_active", true);
 
-    if (error) throw new Error(error.message);
+    if (error) throw new InternalServerErrorException(error.message);
 
     if (!data || data.length === 0) {
-      throw new Error("No active questions found");
+      throw new NotFoundException("No active questions found");
     }
 
     const randomIndex = Math.floor(Math.random() * data.length);
@@ -212,15 +217,6 @@ export class QuestionsService {
     try {
       const today = new Date();
       const todayString = today.toISOString().split("T")[0]; // YYYY-MM-DD 형식
-
-      // 이미 오늘 실행되었는지 확인
-      const lastRunKey = `last_daily_publish_${todayString}`;
-      const lastRun = global[lastRunKey];
-
-      if (lastRun) {
-        this.logger.log("Daily question publishing already executed today");
-        return;
-      }
 
       this.logger.log(`Looking for questions to publish on ${todayString}`);
 
@@ -277,9 +273,6 @@ export class QuestionsService {
       this.logger.log(
         `Successfully published forums for ${updatedQuestions?.length || 0} questions`
       );
-
-      // 실행 완료 표시
-      global[lastRunKey] = new Date().toISOString();
     } catch (error) {
       this.logger.error("Daily question publishing job failed:", error);
     }
@@ -288,22 +281,7 @@ export class QuestionsService {
   // 서버 시작 시 오늘 문제 확인 (선택사항)
   async checkTodaysQuestion() {
     this.logger.log("Checking if today's question forum is enabled...");
-
-    // 이미 오늘 실행되었는지 확인
-    const today = new Date().toISOString().split("T")[0];
-    const lastRunKey = `last_daily_publish_${today}`;
-
-    // Redis나 메모리에 마지막 실행 시간 저장 (간단한 구현)
-    // 실제로는 Redis나 DB에 저장하는 것이 좋음
-    const lastRun = global[lastRunKey];
-
-    if (lastRun) {
-      this.logger.log("Daily question publishing already executed today");
-      return;
-    }
-
     await this.publishDailyQuestion();
-    global[lastRunKey] = new Date().toISOString();
   }
 
   // 수동으로 특정 문제의 포럼을 활성화하는 메서드

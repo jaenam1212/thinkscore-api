@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 
 export interface RankingUser {
@@ -37,104 +37,65 @@ export interface RankingStats {
 @Injectable()
 export class RankingsService {
   constructor(private supabase: SupabaseService) {}
+  private readonly logger = new Logger(RankingsService.name);
 
   async getOverallRankings(limit: number = 50): Promise<RankingUser[]> {
-    try {
-      // scores 테이블에서 answer_id와 점수를 가져온 후, answers 테이블과 조인해서 user_id 획득
-      const { data: scoresData, error: scoresError } = await this.supabase
-        .getClient()
-        .from("scores").select(`
-          answer_id,
-          score,
-          answers!inner(user_id)
-        `);
-
-      if (scoresError) {
-        console.error("Scores query error:", scoresError);
-        throw scoresError;
-      }
-
-      // profiles 테이블에서 사용자 정보 가져오기
-      const { data: profilesData, error: profilesError } = await this.supabase
-        .getClient()
-        .from("profiles")
-        .select("id, display_name");
-
-      if (profilesError) {
-        console.error("Profiles query error:", profilesError);
-        throw profilesError;
-      }
-
-      console.log("Scores data length:", scoresData?.length);
-      console.log("Profiles data length:", profilesData?.length);
-
-      type ScoreData = Array<{
-        answer_id: number;
-        score: number;
-        answers: { user_id: string };
-      }>;
-      type ProfileData = Array<{
-        id: string;
-        display_name: string;
-      }>;
-
-      const typedScores = scoresData as unknown as ScoreData;
-      const typedProfiles = profilesData as ProfileData;
-
-      // 프로필 데이터를 Map으로 변환
-      const profilesMap = new Map(
-        typedProfiles.map((profile) => [profile.id, profile])
+    const { data, error } = await this.supabase
+      .getClient()
+      .from("scores")
+      .select(
+        `
+        score,
+        answers!inner(
+          user_id,
+          profiles(id, display_name)
+        )`,
+        { count: "exact" }
       );
 
-      // 사용자별로 점수 집계
-      const userScores = new Map<
-        string,
-        {
-          total_score: number;
-          answer_count: number;
-        }
-      >();
+    if (error) throw error;
 
-      typedScores.forEach((score) => {
-        const userId = score.answers.user_id;
-        const existing = userScores.get(userId);
-        if (existing) {
-          existing.total_score += score.score;
-          existing.answer_count += 1;
-        } else {
-          userScores.set(userId, {
-            total_score: score.score,
-            answer_count: 1,
-          });
-        }
-      });
+    type Row = {
+      score: number;
+      answers: {
+        user_id: string;
+        profiles: { id: string; display_name: string } | null;
+      };
+    };
+    const rows = data as unknown as Row[];
 
-      // 랭킹 데이터 생성
-      const rankings = Array.from(userScores.entries())
-        .map(([userId, userData]) => {
-          const profile = profilesMap.get(userId);
-          return {
-            id: userId,
-            display_name:
-              profile?.display_name || (profile ? "비공개" : "비회원"),
-            total_score: userData.total_score,
-            average_score: userData.total_score / userData.answer_count,
-            answer_count: userData.answer_count,
-            rank_position: 0,
-          };
-        })
-        .sort((a, b) => b.average_score - a.average_score)
-        .slice(0, limit)
-        .map((user, index) => ({
-          ...user,
-          rank_position: index + 1,
-        }));
-
-      return rankings;
-    } catch (error) {
-      console.error("getOverallRankings error:", error);
-      throw error;
+    // Aggregate per user
+    const map = new Map<
+      string,
+      { display_name: string; total_score: number; answer_count: number }
+    >();
+    for (const row of rows) {
+      const userId = row.answers.user_id;
+      const existing = map.get(userId);
+      if (existing) {
+        existing.total_score += row.score;
+        existing.answer_count += 1;
+      } else {
+        map.set(userId, {
+          display_name: row.answers.profiles?.display_name || "비공개",
+          total_score: row.score,
+          answer_count: 1,
+        });
+      }
     }
+
+    return Array.from(map.entries())
+      .map(([userId, userData]) => ({
+        id: userId,
+        display_name: userData.display_name,
+        total_score: userData.total_score,
+        average_score: userData.total_score / userData.answer_count,
+        answer_count: userData.answer_count,
+        rank_position: 0,
+      }))
+      .sort((a, b) => b.average_score - a.average_score)
+      .slice(0, limit)
+      .map((user, index) => ({ ...user, rank_position: index + 1 }));
   }
 
   async getQuestionRankings(

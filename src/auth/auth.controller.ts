@@ -48,23 +48,26 @@ export class AuthController {
   @Get("callback")
   handleCallback(@Req() req: Request, @Res() res: Response) {
     try {
-      // Supabase Auth callback 처리
       const { access_token } = req.query;
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
       if (access_token && typeof access_token === "string") {
-        // 토큰을 쿠키에 저장하거나 프론트엔드로 리다이렉트
-        res.redirect(
-          `${process.env.FRONTEND_URL || "http://localhost:3000"}?access_token=${access_token}`
-        );
+        // 토큰을 URL에 노출하지 않고 postMessage로 안전하게 전달
+        const html = `<!DOCTYPE html>
+<html><head><script>
+  window.opener?.postMessage({ type: 'AUTH_CALLBACK', token: '${access_token}' }, '${frontendUrl}');
+  window.close();
+  setTimeout(function() { window.location.href = '${frontendUrl}'; }, 300);
+</script></head>
+<body>로그인 처리 중...</body></html>`;
+        res.setHeader("Content-Type", "text/html");
+        res.send(html);
       } else {
-        res.redirect(
-          `${process.env.FRONTEND_URL || "http://localhost:3000"}/auth/error`
-        );
+        res.redirect(`${frontendUrl}/auth/error`);
       }
     } catch {
-      res.redirect(
-        `${process.env.FRONTEND_URL || "http://localhost:3000"}/auth/error`
-      );
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+      res.redirect(`${frontendUrl}/auth/error`);
     }
   }
 

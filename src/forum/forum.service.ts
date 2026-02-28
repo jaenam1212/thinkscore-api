@@ -1,94 +1,29 @@
-import { Injectable } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  Logger,
+} from "@nestjs/common";
 import { SupabaseService } from "../supabase/supabase.service";
 import {
   CreatePostDto,
   UpdatePostDto,
   CreateCommentDto,
 } from "../common/dto/forum.dto";
-
-interface ForumPostWithAuthor {
-  id: number;
-  title: string;
-  content: string;
-  author_id: string;
-  category: string;
-  views_count: number;
-  likes_count: number;
-  created_at: string;
-  updated_at: string;
-  author?: {
-    username: string;
-    avatar_url: string | null;
-  };
-  comments_count: number;
-}
-
-interface ForumPostRaw {
-  id: number;
-  title: string;
-  content: string;
-  author_id: string;
-  category: string;
-  views_count: number;
-  likes_count: number;
-  created_at: string;
-  updated_at: string;
-  author?: {
-    username: string;
-    avatar_url: string | null;
-  };
-  comments_count?: Array<{ count: number }>;
-  question?: {
-    title: string;
-    description: string;
-  };
-}
-
-interface ForumPost {
-  id: number;
-  title: string;
-  content: string;
-  author_id: string;
-  category: string;
-  views_count: number;
-  likes_count: number;
-  created_at: string;
-  updated_at: string;
-  question_id?: number;
-}
-
-interface ForumComment {
-  id: number;
-  post_id: number;
-  content: string;
-  author_id: string;
-  created_at: string;
-  updated_at: string;
-  author?: {
-    username: string;
-    avatar_url: string | null;
-  };
-}
-
-interface ForumPostDetail extends ForumPost {
-  author: {
-    username: string;
-    avatar_url: string | null;
-  };
-  comments: ForumComment[];
-}
-
-interface Board {
-  id: number | null;
-  name: string;
-  type: "general" | "question";
-  description: string;
-  published_at: string | null;
-}
+import {
+  ForumPost,
+  ForumPostWithAuthor,
+  ForumPostRaw,
+  ForumPostDetail,
+  ForumComment,
+  ForumBoardItem,
+} from "../common/types";
 
 @Injectable()
 export class ForumService {
   constructor(private supabase: SupabaseService) {}
+  private readonly logger = new Logger(ForumService.name);
 
   async createPost(
     createPostDto: CreatePostDto,
@@ -105,7 +40,9 @@ export class ForumService {
         .single();
 
       if (questionError || !questionData) {
-        throw new Error("해당 문제의 게시판이 활성화되지 않았습니다.");
+        throw new BadRequestException(
+          "해당 문제의 게시판이 활성화되지 않았습니다."
+        );
       }
     }
 
@@ -159,11 +96,9 @@ export class ForumService {
 
       const { data, error } = await query;
       if (error) {
-        console.error("Forum posts query error:", error);
+        this.logger.error("Forum posts query error:", error);
         throw error;
       }
-
-      console.log("Forum posts data:", data);
 
       type SupabaseForumPost = Array<{
         id: number;
@@ -187,7 +122,7 @@ export class ForumService {
         comments_count: post.comments_count?.[0]?.count || 0,
       })) || []) as ForumPostWithAuthor[];
     } catch (error) {
-      console.error("getPosts error:", error);
+      this.logger.error("getPosts error:", error);
       throw error;
     }
   }
@@ -361,9 +296,9 @@ export class ForumService {
       .eq("id", commentId)
       .single();
 
-    if (fetchError) throw new Error("댓글을 찾을 수 없습니다.");
+    if (fetchError) throw new NotFoundException("댓글을 찾을 수 없습니다.");
     if (comment?.author_id !== userId) {
-      throw new Error("본인이 작성한 댓글만 삭제할 수 있습니다.");
+      throw new ForbiddenException("본인이 작성한 댓글만 삭제할 수 있습니다.");
     }
 
     const { error } = await this.supabase
@@ -386,13 +321,14 @@ export class ForumService {
         .single();
 
       if (error) {
-        console.error("Admin status check error:", error);
+        this.logger.error("Admin status check error:", error);
         return { isAdmin: false };
       }
 
-      return { isAdmin: data?.is_admin || false };
+      const row = data as { is_admin?: boolean } | null;
+      return { isAdmin: row?.is_admin || false };
     } catch (error) {
-      console.error("checkAdminStatus error:", error);
+      this.logger.error("checkAdminStatus error:", error);
       return { isAdmin: false };
     }
   }
@@ -404,7 +340,7 @@ export class ForumService {
     // 관리자 권한 확인
     const adminStatus = await this.checkAdminStatus(adminUserId);
     if (!adminStatus.isAdmin) {
-      throw new Error("관리자 권한이 필요합니다.");
+      throw new ForbiddenException("관리자 권한이 필요합니다.");
     }
 
     // 게시글 삭제 (작성자 확인 없이)
@@ -425,11 +361,11 @@ export class ForumService {
     error?: string;
   }> {
     try {
-      console.log("=== Forum Debug Connection Start ===");
+      this.logger.debug("=== Forum Debug Connection Start ===");
 
       // Test basic connection
       const client = this.supabase.getClient();
-      console.log("Supabase client:", !!client);
+      this.logger.debug(`Supabase client: ${!!client}`);
 
       // Test simple query
       const { data: tableData, error: tableError } = await client
@@ -437,10 +373,9 @@ export class ForumService {
         .select("count")
         .limit(1);
 
-      console.log("Table query result:", {
-        data: tableData,
-        error: tableError,
-      });
+      this.logger.debug(
+        `Table query result: ${JSON.stringify({ data: tableData, error: tableError })}`
+      );
 
       // Test with specific columns
       const { data: basicData, error: basicError } = await client
@@ -448,12 +383,11 @@ export class ForumService {
         .select("id, title, created_at")
         .limit(1);
 
-      console.log("Basic columns result:", {
-        data: basicData,
-        error: basicError,
-      });
+      this.logger.debug(
+        `Basic columns result: ${JSON.stringify({ data: basicData, error: basicError })}`
+      );
 
-      console.log("=== Forum Debug Connection End ===");
+      this.logger.debug("=== Forum Debug Connection End ===");
 
       return {
         connection: !!client,
@@ -461,14 +395,14 @@ export class ForumService {
         basicQuery: { data: basicData, error: basicError },
       };
     } catch (error) {
-      console.error("Debug connection error:", error);
+      this.logger.error("Debug connection error:", error);
       return {
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
 
-  async getAvailableBoards(): Promise<Board[]> {
+  async getAvailableBoards(): Promise<ForumBoardItem[]> {
     try {
       // 포럼이 활성화된 문제들 조회
       const { data: questions, error } = await this.supabase
@@ -479,7 +413,7 @@ export class ForumService {
         .order("published_at", { ascending: false });
 
       if (error) {
-        console.error("Questions query error:", error);
+        this.logger.error("Questions query error:", error);
         throw error;
       }
 
@@ -508,9 +442,9 @@ export class ForumService {
         ),
       ];
 
-      return boards as Board[];
+      return boards as ForumBoardItem[];
     } catch (error) {
-      console.error("getAvailableBoards error:", error);
+      this.logger.error("getAvailableBoards error:", error);
       throw error;
     }
   }
