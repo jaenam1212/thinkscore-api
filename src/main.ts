@@ -4,6 +4,9 @@ import { ValidationPipe } from "@nestjs/common";
 import helmet from "helmet";
 
 async function bootstrap() {
+  const port = parseInt(process.env.PORT || "3001", 10);
+  console.log("[Startup] PORT:", port, "PORT env:", process.env.PORT);
+
   const app = await NestFactory.create(AppModule);
 
   // Security headers (crossOriginEmbedderPolicy 비활성화 - CORS 요청 허용)
@@ -48,9 +51,8 @@ async function bootstrap() {
     optionsSuccessStatus: 200,
   });
 
-  const port = parseInt(process.env.PORT || "3001", 10);
   await app.listen(port, "0.0.0.0");
-  console.log(`Application is running on: http://localhost:${port}`);
+  console.log(`[Startup] Application is running on 0.0.0.0:${port}`);
 }
 
 bootstrap().catch((err) => {
