@@ -24,7 +24,9 @@ ENV PORT=3001
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+# HUSKY=0: prepare 스크립트(husky) 생략 - Docker/CI에서는 불필요
+ENV HUSKY=0
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 COPY --from=builder /app/dist ./dist
 
