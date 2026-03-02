@@ -6,8 +6,13 @@ import helmet from "helmet";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Security headers
-  app.use(helmet());
+  // Security headers (crossOriginEmbedderPolicy 비활성화 - CORS 요청 허용)
+  app.use(
+    helmet({
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+    })
+  );
 
   // Global validation pipe
   app.useGlobalPipes(
