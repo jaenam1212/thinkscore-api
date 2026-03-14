@@ -7,6 +7,8 @@ import {
   Res,
   Body,
   UseGuards,
+  HttpException,
+  HttpStatus,
 } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
@@ -131,6 +133,21 @@ export class AuthController {
     return this.authService.naverLogin(body.accessToken, body.profile);
   }
 
+  @Post("google")
+  async googleLogin(
+    @Body() body: { accessToken: string; profile: GoogleProfile }
+  ) {
+    try {
+      return await this.authService.googleLogin(body.accessToken, body.profile);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Google 로그인에 실패했습니다.";
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   @Post("apple")
   async appleLogin(@Body() body: { idToken: string; user?: AppleUserData }) {
     return this.authService.appleLogin(body.idToken, body.user);
@@ -162,4 +179,11 @@ interface NaverProfile {
   nickname: string;
   email: string;
   profile_image: string;
+}
+
+interface GoogleProfile {
+  id: string;
+  name: string;
+  email: string;
+  picture: string;
 }

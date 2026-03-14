@@ -303,6 +303,13 @@ export class AuthService {
   }
 
   async googleLogin(accessToken: string, profile: GoogleProfile) {
+    if (!profile.email) {
+      throw new Error("Google 계정에서 이메일 정보를 가져올 수 없습니다.");
+    }
+
+    const displayName = profile.name?.trim() || profile.email.split("@")[0];
+    const username = `google_${profile.id}`.slice(0, 100);
+
     let user = await this.findUserByGoogleId(profile.id);
 
     if (!user) {
@@ -331,8 +338,8 @@ export class AuthService {
           .from("profiles")
           .insert({
             email: profile.email,
-            display_name: profile.name,
-            username: profile.name,
+            display_name: displayName,
+            username,
             google_id: profile.id,
             avatar_url: profile.picture,
             provider: "google",
