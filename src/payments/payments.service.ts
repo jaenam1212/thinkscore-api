@@ -314,11 +314,10 @@ export class PaymentsService {
         string,
         { expires_date?: string; store?: string; is_sandbox?: boolean }
       > = subscriber?.subscriptions ?? {};
-      const activeSubKey = Object.keys(subscriptions).find(
-        (key) =>
-          subscriptions[key].expires_date &&
-          new Date(subscriptions[key].expires_date) > new Date()
-      );
+      const activeSubKey = Object.keys(subscriptions).find((key) => {
+        const expiresDate = subscriptions[key].expires_date;
+        return expiresDate != null && new Date(expiresDate) > new Date();
+      });
       const activeSub = activeSubKey ? subscriptions[activeSubKey] : null;
 
       // DB 동기화

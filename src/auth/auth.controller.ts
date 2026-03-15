@@ -150,7 +150,13 @@ export class AuthController {
 
   @Post("apple")
   async appleLogin(@Body() body: { idToken: string; user?: AppleUserData }) {
-    return this.authService.appleLogin(body.idToken, body.user);
+    try {
+      return await this.authService.appleLogin(body.idToken, body.user);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Apple 로그인에 실패했습니다.";
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Post("migrate-social")

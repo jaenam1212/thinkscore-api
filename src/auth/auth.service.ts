@@ -456,6 +456,7 @@ export class AuthService {
         const displayName = userData?.name
           ? `${userData.name.firstName || ""} ${userData.name.lastName || ""}`.trim()
           : email.split("@")[0];
+        const username = `apple_${tokenData.sub}`.slice(0, 100);
 
         const { data, error } = await this.supabaseService
           .getClient()
@@ -463,7 +464,7 @@ export class AuthService {
           .insert({
             email,
             display_name: displayName,
-            username: displayName,
+            username,
             apple_id: tokenData.sub,
             provider: "apple",
             last_login_at: new Date().toISOString(),
