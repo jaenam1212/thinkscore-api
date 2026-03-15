@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString, Min, Max } from "class-validator";
+import { IsNumber, IsOptional, IsString, IsObject, Min, Max } from "class-validator";
 
 export class CreateScoreDto {
   @IsNumber()
@@ -12,4 +12,8 @@ export class CreateScoreDto {
   @IsString()
   @IsOptional()
   reason?: string;
+
+  @IsObject()
+  @IsOptional()
+  criteria_scores?: Record<string, number>;
 }

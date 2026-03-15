@@ -121,6 +121,7 @@ export interface Score {
   answer_id: number;
   score: number;
   reason?: string;
+  criteria_scores?: Record<string, number>;
   created_at: string;
   scorer_id?: string;
   is_ai_score: boolean;

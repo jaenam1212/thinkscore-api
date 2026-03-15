@@ -322,6 +322,7 @@ export class AnswersService {
         answer_id: answerId,
         score: evaluation.score,
         reason: evaluation.feedback,
+        criteria_scores: evaluation.criteriaScores,
         created_at: new Date().toISOString(),
       })
       .select()
