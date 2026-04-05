@@ -119,12 +119,14 @@ export class ForumController {
     return this.forumService.getAvailableBoards();
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  /** 로그인한 사용자 본인의 관리자 여부 조회 (관리자만 호출 가능하면 일반 유저가 포럼 상세를 못 봄) */
+  @UseGuards(JwtAuthGuard)
   @Get("admin/check")
   async checkAdminStatus(
     @Request() req: JwtRequest
   ): Promise<{ isAdmin: boolean }> {
-    return this.forumService.checkAdminStatus(req.user.id);
+    const userId = req.user.id ?? req.user.userId;
+    return this.forumService.checkAdminStatus(userId);
   }
 
   @UseGuards(JwtAuthGuard, AdminGuard)

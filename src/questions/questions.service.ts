@@ -55,10 +55,14 @@ export class QuestionsService {
   }
 
   async createQuestion(questionData: CreateQuestionDto): Promise<Question> {
+    const isActive = questionData.is_active !== false;
     const { data, error } = await this.supabaseService
       .getClient()
       .from("questions")
-      .insert(questionData)
+      .insert({
+        ...questionData,
+        forum_enabled: isActive,
+      })
       .select()
       .single();
 
@@ -70,10 +74,20 @@ export class QuestionsService {
     id: number,
     updateData: UpdateQuestionDto
   ): Promise<Question> {
+    const payload: UpdateQuestionDto & { forum_enabled?: boolean } = {
+      ...updateData,
+    };
+    if (updateData.is_active === true) {
+      payload.forum_enabled = true;
+    }
+    if (updateData.is_active === false) {
+      payload.forum_enabled = false;
+    }
+
     const { data, error } = await this.supabaseService
       .getClient()
       .from("questions")
-      .update(updateData)
+      .update(payload)
       .eq("id", id)
       .select()
       .single();
@@ -132,6 +146,7 @@ export class QuestionsService {
             tags: item.tags,
             evaluation_criteria: item.evaluation_criteria,
             is_active: true,
+            forum_enabled: true,
             created_at: new Date().toISOString(),
           }))
         );

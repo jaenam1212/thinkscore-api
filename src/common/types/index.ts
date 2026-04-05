@@ -164,13 +164,19 @@ export interface ForumPostDetail {
   category: string;
   views_count: number;
   likes_count: number;
+  comments_count?: number;
   created_at: string;
   updated_at: string;
   question_id?: number;
+  question?: {
+    title: string;
+    description: string;
+  };
   author: {
     username: string;
     avatar_url: string | null;
   };
+  /** 상세 API는 댓글은 별도 엔드포인트로 조회; 호환용 빈 배열 가능 */
   comments: ForumComment[];
 }
 
