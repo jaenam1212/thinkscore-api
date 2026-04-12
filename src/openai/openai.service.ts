@@ -13,6 +13,65 @@ interface OpenAILogEntry {
   status: string;
 }
 
+/** AI가 반환한 기준별 점수를 검증·보정하고 총점을 가중합으로 재계산한다. */
+const CRITERIA_KEYS = [
+  "질문 적합도",
+  "논리적 사고",
+  "창의적 사고",
+  "일관성",
+] as const;
+type CriteriaKey = (typeof CRITERIA_KEYS)[number];
+
+const CRITERIA_WEIGHTS: Record<CriteriaKey, number> = {
+  "질문 적합도": 0.5,
+  "논리적 사고": 0.2,
+  "창의적 사고": 0.2,
+  일관성: 0.1,
+};
+
+function clampInt0to100(n: unknown): number {
+  const x = Math.round(Number(n));
+  if (Number.isNaN(x)) return 0;
+  return Math.max(0, Math.min(100, x));
+}
+
+function normalizeCriteriaScores(
+  raw: Record<string, number> | undefined
+): Record<CriteriaKey, number> {
+  const cs = {} as Record<CriteriaKey, number>;
+  for (const key of CRITERIA_KEYS) {
+    cs[key] = clampInt0to100(raw?.[key]);
+  }
+
+  const rel = cs["질문 적합도"];
+  if (rel < 40) {
+    const capOthers = Math.min(100, rel + 25);
+    cs["논리적 사고"] = Math.min(cs["논리적 사고"], capOthers);
+    cs["창의적 사고"] = Math.min(cs["창의적 사고"], capOthers);
+    cs["일관성"] = Math.min(cs["일관성"], capOthers);
+  }
+
+  return cs;
+}
+
+function totalScoreFromCriteria(cs: Record<CriteriaKey, number>): number {
+  let sum = 0;
+  for (const key of CRITERIA_KEYS) {
+    sum += cs[key] * CRITERIA_WEIGHTS[key];
+  }
+  return Math.round(sum);
+}
+
+function emptyCriteriaScores(): Record<CriteriaKey, number> {
+  return CRITERIA_KEYS.reduce(
+    (acc, k) => {
+      acc[k] = 0;
+      return acc;
+    },
+    {} as Record<CriteriaKey, number>
+  );
+}
+
 @Injectable()
 export class OpenAIService {
   private openai: OpenAI;
@@ -45,11 +104,7 @@ export class OpenAIService {
         score: 0,
         feedback:
           "숫자만 입력된 답변은 평가할 수 없습니다. 생각과 근거를 문장으로 서술해 주세요.",
-        criteriaScores: {
-          "논리적 사고": 0,
-          "창의적 사고": 0,
-          일관성: 0,
-        },
+        criteriaScores: emptyCriteriaScores(),
       };
     }
 
@@ -71,11 +126,7 @@ export class OpenAIService {
         score: 0,
         feedback:
           "의미 있는 서술이 감지되지 않았습니다. 질문에 대한 생각을 문장으로 표현해 주세요.",
-        criteriaScores: {
-          "논리적 사고": 0,
-          "창의적 사고": 0,
-          일관성: 0,
-        },
+        criteriaScores: emptyCriteriaScores(),
       };
     }
 
@@ -101,11 +152,7 @@ export class OpenAIService {
         score: 0,
         feedback:
           "부적절한 내용이 포함되어 있어 평가할 수 없습니다. 건전한 언어로 다시 작성해 주세요.",
-        criteriaScores: {
-          "논리적 사고": 0,
-          "창의적 사고": 0,
-          일관성: 0,
-        },
+        criteriaScores: emptyCriteriaScores(),
       };
     }
 
@@ -114,11 +161,7 @@ export class OpenAIService {
         score: 0,
         feedback:
           "답변이 너무 짧거나 성의 없이 작성되었습니다. 질문에 대한 구체적인 생각을 서술해 주세요.",
-        criteriaScores: {
-          "논리적 사고": 0,
-          "창의적 사고": 0,
-          일관성: 0,
-        },
+        criteriaScores: emptyCriteriaScores(),
       };
     }
 
@@ -129,41 +172,39 @@ export class OpenAIService {
       return {
         score: 0,
         feedback: "AI 치팅이 의심됩니다",
-        criteriaScores: {
-          "논리적 사고": 0,
-          "창의적 사고": 0,
-          일관성: 0,
-        },
+        criteriaScores: emptyCriteriaScores(),
       };
     }
 
     const input = `
-다음 철학적 질문에 대한 답변을 3가지 기준으로 평가하세요.
+다음 철학적 질문에 대한 답변을 4가지 기준으로 평가하세요.
 
 **질문**: ${question}
 
 **답변**: ${answer}
 
-**평가 기준**:
-1. **논리적 사고** (40%): 논리 구조, 인과관계, 반박에 대한 처리
-2. **창의적 사고** (30%): 새로운 관점, 독창적 접근, 적절한 비유
-3. **일관성** (30%): 자기모순 부재, 결론과 논증의 정합성
+**평가 기준** (반드시 질문과 답변의 연관성을 먼저 판단할 것):
+1. **질문 적합도** (50%): 제시된 질문의 쟁점·요구를 실제로 다루는가. 질문과 다른 주제만 길게 쓴 경우(비유·일화만 있고 질문 핵심을 피한 경우 포함) 매우 낮은 점수(대략 0~25). 부분적으로만 맞으면 중간대.
+2. **논리적 사고** (20%): 논리 구조, 인과관계, 반박에 대한 처리 (질문에 맞는 논증에 한해 평가)
+3. **창의적 사고** (20%): 새로운 관점, 독창적 접근, 적절한 비유 (질문과 연결된 범위에서)
+4. **일관성** (10%): 자기모순 부재, 결론과 논증의 정합성
 
-**채점 방식**:
-- 각 기준마다 0-100점 (정수)
-- 총점 = round(논리적 사고 × 0.4 + 창의적 사고 × 0.3 + 일관성 × 0.3)
-- 길이보다는 질을 중시하여 평가
-- 길다고 감점은 아님
-- 점수는 넉넉하게 준다
-- 철학적 사고를 평가하는 전문가입니다. 논리적 일관성, 창의성, 깊이를 중요하게 평가합니다.
+**엄격 규칙**:
+- 질문과 무관하거나 표면적으로만 비슷한 답은 **질문 적합도**를 25 이하로 두고, 그 경우 다른 기준도 높게 줄 수 없다.
+- 길이·문장 수만 많다고 가점을 주지 말 것.
+- 길다고 감점은 아니나, 장황한 중복은 해당 기준에서 감점.
 
-**피드백 형식**: 정확히 2문장 (첫 번째 문장=강점, 두 번째 문장=개선점)
+**총점 공식** (반드시 이 가중치와 일치하게 산출):
+round(질문 적합도×0.5 + 논리적 사고×0.2 + 창의적 사고×0.2 + 일관성×0.1)
 
-**응답 형식** (JSON만):
+**피드백 형식**: 정확히 2문장 (첫 번째 문장=강점, 두 번째 문장=개선점). 질문을 벗어났다면 개선점에서 이탈을 명시.
+
+**응답 형식** (JSON만, 키 이름·철자를 정확히):
 {
   "score": 총점,
   "feedback": "강점: [구체적 강점]. 개선점: [구체적 개선사항].",
   "criteriaScores": {
+    "질문 적합도": 점수,
     "논리적 사고": 점수,
     "창의적 사고": 점수,
     "일관성": 점수
@@ -172,7 +213,7 @@ export class OpenAIService {
 `;
 
     const startTime = Date.now();
-    const model = "gpt-5-nano";
+    const model = "gpt-5.4-nano";
 
     // Create initial log entry
     const supabase = this.supabaseService.getClient();
@@ -210,10 +251,28 @@ export class OpenAIService {
         throw new Error("OpenAI 응답이 비어있습니다.");
       }
 
-      const result = JSON.parse(content) as {
-        score: number;
-        feedback: string;
-        criteriaScores: Record<string, number>;
+      let jsonText = content.trim();
+      if (jsonText.startsWith("```")) {
+        jsonText = jsonText
+          .replace(/^```(?:json)?\s*/i, "")
+          .replace(/\s*```\s*$/i, "");
+      }
+
+      const parsed = JSON.parse(jsonText) as {
+        score?: number;
+        feedback?: string;
+        criteriaScores?: Record<string, number>;
+      };
+
+      const criteriaScores = normalizeCriteriaScores(parsed.criteriaScores);
+      const score = totalScoreFromCriteria(criteriaScores);
+      const result = {
+        score,
+        feedback:
+          typeof parsed.feedback === "string"
+            ? parsed.feedback
+            : "강점: 평가를 완료했습니다. 개선점: 피드백 형식을 확인해 주세요.",
+        criteriaScores,
       };
 
       // Update log with successful response
