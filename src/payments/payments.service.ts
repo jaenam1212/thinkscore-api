@@ -296,6 +296,8 @@ export class PaymentsService {
         return this.getSubscriptionStatus(userId);
       }
 
+      const existing = await this.getSubscriptionStatus(userId);
+
       const data = (await response.json()) as RevenueCatSubscriberResponse;
       const subscriber = data.subscriber;
 
@@ -320,8 +322,7 @@ export class PaymentsService {
       });
       const activeSub = activeSubKey ? subscriptions[activeSubKey] : null;
 
-      // DB 동기화
-      const status: Omit<SubscriptionStatus, "updated_at"> = {
+      const fromRc: Omit<SubscriptionStatus, "updated_at"> = {
         user_id: userId,
         is_premium: isPremium || false,
         plan_id: activeSubKey || null,
@@ -330,6 +331,25 @@ export class PaymentsService {
         store: activeSub?.store ?? null,
         environment: activeSub?.is_sandbox ? "SANDBOX" : "PRODUCTION",
       };
+
+      const tossStillValid =
+        existing &&
+        existing.store === "TOSS" &&
+        existing.expires_at &&
+        new Date(existing.expires_at) > new Date();
+
+      // 스토어 구독이 활성이면 RC 기준으로 동기화. 없으면 토스페이먼츠(웹) 구독이 유효하면 유지
+      const status: Omit<SubscriptionStatus, "updated_at"> =
+        fromRc.is_premium || !tossStillValid
+          ? fromRc
+          : {
+              user_id: userId,
+              is_premium: true,
+              plan_id: existing.plan_id,
+              expires_at: existing.expires_at,
+              store: "TOSS",
+              environment: existing.environment ?? "PRODUCTION",
+            };
 
       const { error } = await this.supabaseService
         .getClient()
@@ -353,6 +373,44 @@ export class PaymentsService {
   /**
    * 클라이언트에서 올라온 구매 영수증 검증 (선택적 - RevenueCat SDK가 자동 처리하지만 추가 검증용)
    */
+  /**
+   * 토스페이먼츠 빌링(정기결제) 웹훅에서 호출 — 결제 검증 후 이 메서드로 DB 반영
+   * (실제 서명 검증·본문 파싱은 토스 문서에 맞춰 webhook 핸들러에서 수행)
+   */
+  async upsertTossSubscription(params: {
+    userId: string;
+    planId: string;
+    expiresAt: string;
+    transactionId?: string;
+    environment?: string;
+  }): Promise<void> {
+    const { error } = await this.supabaseService
+      .getClient()
+      .from("subscriptions")
+      .upsert(
+        {
+          user_id: params.userId,
+          is_premium: true,
+          plan_id: params.planId,
+          store: "TOSS",
+          environment: params.environment ?? "PRODUCTION",
+          transaction_id: params.transactionId ?? null,
+          expires_at: params.expiresAt,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      );
+
+    if (error) {
+      this.logger.error(`Failed to upsert Toss subscription for ${params.userId}:`, error);
+      throw error;
+    }
+
+    this.logger.log(
+      `Toss subscription upserted for user ${params.userId}, expires: ${params.expiresAt}`
+    );
+  }
+
   async verifyPurchase(
     userId: string,
     productId: string
